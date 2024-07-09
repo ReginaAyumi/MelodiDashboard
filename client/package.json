@@ -1,0 +1,64 @@
+{
+  "name": "client",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@date-io/date-fns": "^3.0.0",
+    "@emotion/react": "^11.11.4",
+    "@emotion/styled": "^11.11.5",
+    "@mui/icons-material": "^5.15.15",
+    "@mui/lab": "^5.0.0-alpha.170",
+    "@mui/material": "^5.15.15",
+    "@mui/x-data-grid": "^7.3.0",
+    "@nivo/bar": "^0.85.1",
+    "@nivo/bump": "^0.87.0",
+    "@nivo/core": "^0.85.1",
+    "@nivo/geo": "^0.85.1",
+    "@nivo/heatmap": "^0.87.0",
+    "@nivo/line": "^0.87.0",
+    "@nivo/pie": "^0.85.1",
+    "@nivo/radar": "^0.87.0",
+    "@nivo/radial-bar": "^0.87.0",
+    "@nivo/scatterplot": "^0.87.0",
+    "@nivo/stream": "^0.87.0",
+    "@nivo/waffle": "^0.87.0",
+    "@react-spring/web": "^9.7.3",
+    "@reduxjs/toolkit": "^2.2.3",
+    "@testing-library/jest-dom": "^5.17.0",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^13.5.0",
+    "axios": "^1.7.2",
+    "react": "^18.2.0",
+    "react-datepicker": "^6.9.0",
+    "react-dom": "^18.2.0",
+    "react-redux": "^9.1.1",
+    "react-router-dom": "^6.23.0",
+    "react-scripts": "5.0.1",
+    "socket.io-client": "^4.7.5",
+    "web-vitals": "^2.1.4"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}
