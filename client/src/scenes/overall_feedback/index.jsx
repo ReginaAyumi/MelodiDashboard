@@ -7,9 +7,16 @@ import {
   Rating,
   useTheme,
   useMediaQuery,
+  Collapse,
+  IconButton,
+  Skeleton,
+  TextField,
+  Button,
 } from "@mui/material";
 import { useGetFeedbacksQuery } from "state/api";
 import Header from "components/Header";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 
 const FeedbackCard = ({
   _id,
@@ -32,8 +39,28 @@ const FeedbackCard = ({
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",
+        p: "1rem",
       }}
     >
+      <Typography variant="h6">{categories}</Typography>
+      <Rating value={rating} readOnly sx={{ mt: "0.5rem" }} />
+      <Typography variant="body2" color="textSecondary" sx={{ mt: "0.5rem" }}>
+        {new Date(feedbackDate).toLocaleDateString()}
+      </Typography>
+      <Typography variant="body2" sx={{ mt: "0.5rem" }}>
+        {feedbackContent.substring(0, 100)}...
+      </Typography>
+      <IconButton
+        onClick={() => setIsExpanded((prev) => !prev)}
+        sx={{ alignSelf: "flex-end" }}
+      >
+        {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+      </IconButton>
+      <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+        <Typography variant="body2" sx={{ mt: "1rem" }}>
+          {feedbackContent}
+        </Typography>
+      </Collapse>
     </Card>
   );
 };
@@ -43,16 +70,22 @@ const OverallFeedback = () => {
   const { data, isLoading } = useGetFeedbacksQuery();
   const isNotMobile = useMediaQuery("(min-width: 1000px)");
   const [filterCategory] = useState(null);
-  const [averageFeedbackByCategory, setAverageFeedbackByCategory] = useState(
-    {}
-  );
+  const [averageFeedbackByCategory, setAverageFeedbackByCategory] = useState({});
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
 
   useEffect(() => {
-    if (data) {
+    if (data && startDate && endDate) {
       const feedbackByCategory = {};
 
+      // Filter data by date range
+      const filteredData = data.filter(({ feedbackDate }) => {
+        const date = new Date(feedbackDate);
+        return date >= new Date(startDate) && date <= new Date(endDate);
+      });
+
       // Aggregate feedback by category
-      data.forEach(({ categories, rating }) => {
+      filteredData.forEach(({ categories, rating }) => {
         if (!feedbackByCategory[categories]) {
           feedbackByCategory[categories] = [];
         }
@@ -70,7 +103,7 @@ const OverallFeedback = () => {
 
       setAverageFeedbackByCategory(averageByCategory);
     }
-  }, [data]);
+  }, [data, startDate, endDate]);
 
   // Check if data is undefined or null before filtering
   const filteredData =
@@ -86,6 +119,38 @@ const OverallFeedback = () => {
         title="OVERALL FEEDBACK"
         subtitle="Melihat rata-rata feedback dari pengunjung."
       />
+      {/* Date range input */}
+      <Box mt="20px" display="flex" gap="10px" alignItems="center">
+        <TextField
+          label="Start Date"
+          type="date"
+          value={startDate ? startDate.toISOString().split("T")[0] : ""}
+          onChange={(e) => setStartDate(new Date(e.target.value))}
+          InputLabelProps={{
+            shrink: true,
+          }}
+        />
+        <TextField
+          label="End Date"
+          type="date"
+          value={endDate ? endDate.toISOString().split("T")[0] : ""}
+          onChange={(e) => setEndDate(new Date(e.target.value))}
+          InputLabelProps={{
+            shrink: true,
+          }}
+        />
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => {
+            if (startDate && endDate) {
+              setAverageFeedbackByCategory({});
+            }
+          }}
+        >
+          Filter
+        </Button>
+      </Box>
       {/* Display average ratings by category */}
       <Box mt="20px">
         <Box>
@@ -99,7 +164,7 @@ const OverallFeedback = () => {
                 backgroundColor: theme.palette.background.alt,
               }}
             >
-              <Typography variant="body1">{category}</Typography>
+              <Typography variant="h6">{category}</Typography>
               <Rating
                 value={parseFloat(averageFeedbackByCategory[category])}
                 readOnly
@@ -109,7 +174,19 @@ const OverallFeedback = () => {
         </Box>
       </Box>
       {/* Check if filteredData exists before mapping */}
-      {(filteredData && filteredData.length > 0) || !isLoading ? (
+      {isLoading ? (
+        <Box mt="20px">
+          {[...Array(4)].map((_, index) => (
+            <Skeleton
+              key={index}
+              variant="rectangular"
+              width="100%"
+              height={118}
+              sx={{ mt: "10px", borderRadius: "0.55rem" }}
+            />
+          ))}
+        </Box>
+      ) : filteredData && filteredData.length > 0 ? (
         <Box
           mt="20px"
           display="grid"
@@ -121,7 +198,7 @@ const OverallFeedback = () => {
             "& > div": { gridColumn: isNotMobile ? undefined : "span 4" },
           }}
         >
-          {filteredData.map(
+          {/* {filteredData.map(
             ({
               _id,
               visitorId,
@@ -142,10 +219,10 @@ const OverallFeedback = () => {
                 setIsExpanded={() => {}} // Placeholder function
               />
             )
-          )}
+          )} */}
         </Box>
       ) : (
-        <>Loading...</>
+        <Typography mt="20px">No feedback available.</Typography>
       )}
     </Box>
   );

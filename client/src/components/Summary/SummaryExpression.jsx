@@ -49,7 +49,14 @@ const SummaryExpression = () => {
   }, [dispatch]);
 
   const processDataForBarChart = () => {
-    return expressionData.map((item, index) => ({
+    const sortedData = [...expressionData].sort((a, b) => {
+      const dateA = new Date(a._id.split('/').reverse().join('-'));
+      const dateB = new Date(b._id.split('/').reverse().join('-'));
+      return dateA - dateB;
+    });
+    
+    return sortedData.map((item, index) => ({
+      _id: item._id,
       day: `Day ${index + 1}`,
       Marah: item.totalMarah,
       Risih: item.totalRisih,
@@ -189,7 +196,7 @@ const SummaryExpression = () => {
             <ResponsiveBar
               data={processDataForBarChart()}
               keys={['Marah', 'Risih', 'Takut', 'Senyum', 'Netral', 'Sedih', 'Terkejut']}
-              indexBy="day"
+              indexBy="_id"
               margin={{ top: 50, right: 130, bottom: 50, left: 60 }}
               padding={0.3}
               colors={{ scheme: 'nivo' }}
@@ -245,7 +252,7 @@ const SummaryExpression = () => {
                 tickSize: 5,
                 tickPadding: 5,
                 tickRotation: 0,
-                legend: 'Count',
+                legend: 'Number of Visitor',
                 legendPosition: 'middle',
                 legendOffset: -40,
               }}

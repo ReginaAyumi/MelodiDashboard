@@ -61,8 +61,19 @@ const DetailUsia = () => {
 
         if (payloadData) {
           setData(payloadData);
-          setAvailableTimeFrames(payloadData.map((item) => item._id));
           setIsLoading(false);
+          if (timeFrame === "Daily") {
+            const sortedTimeFrames = payloadData
+              .map((item) => item._id)
+              .sort((a, b) => {
+                const dateA = new Date(a.split("/").reverse().join("-"));
+                const dateB = new Date(b.split("/").reverse().join("-"));
+                return dateA - dateB;
+              });
+            setAvailableTimeFrames(sortedTimeFrames);
+          } else {
+            setAvailableTimeFrames(payloadData.map((item) => item._id));
+          }
         }
       }
     };
@@ -100,17 +111,52 @@ const DetailUsia = () => {
   };
 
   const filterDataByTimeFrame = () => {
-    if (!startTimeFrame || !endTimeFrame) return data;
+    if (timeFrame === "Daily") {
+      let filteredData = [...data];
 
-    const startIndex = availableTimeFrames.indexOf(startTimeFrame);
-    const endIndex = availableTimeFrames.indexOf(endTimeFrame);
-    if (startIndex === -1 || endIndex === -1) return data;
+      if (startTimeFrame && endTimeFrame) {
+        filteredData = data.filter((item) => {
+          const itemDate = new Date(item._id.split("/").reverse().join("-"));
+          const startDate = new Date(
+            startTimeFrame.split("/").reverse().join("-")
+          );
+          const endDate = new Date(endTimeFrame.split("/").reverse().join("-"));
 
-    return data.slice(startIndex, endIndex + 1);
+          return itemDate >= startDate && itemDate <= endDate;
+        });
+      }
+
+      return sortData(filteredData);
+    } else if (timeFrame === "Weekly" || timeFrame === "Minute") {
+      let filteredData = [...data];
+
+      if (startTimeFrame && endTimeFrame) {
+        filteredData = data.filter((item) => {
+          // Adjust this logic based on the actual format of _id for Weekly and Minute
+          const itemDate = new Date(item._id); // Assuming _id is directly a valid date format
+          const startDate = new Date(startTimeFrame);
+          const endDate = new Date(endTimeFrame);
+
+          return itemDate >= startDate && itemDate <= endDate;
+        });
+      }
+
+      return filteredData;
+    } else {
+      return data;
+    }
+  };
+
+  const sortData = (data) => {
+    return [...data].sort((a, b) => {
+      const dateA = new Date(a._id.split("/").reverse().join("-"));
+      const dateB = new Date(b._id.split("/").reverse().join("-"));
+      return dateA - dateB;
+    });
   };
 
   const processDataForBarChart = () => {
-    const filteredData = filterDataByTimeFrame();
+    let filteredData = filterDataByTimeFrame();
     if (!Array.isArray(filteredData)) return [];
 
     return filteredData.map((item) => ({
@@ -123,7 +169,7 @@ const DetailUsia = () => {
   };
 
   const processDataForLineChart = () => {
-    const filteredData = filterDataByTimeFrame();
+    let filteredData = filterDataByTimeFrame();
     if (!Array.isArray(filteredData)) return [];
 
     const formattedData = [
@@ -332,12 +378,9 @@ const DetailUsia = () => {
                     boxShadow: `0px 2px 10px ${theme.palette.secondary[200]}`,
                   }}
                 >
-                  <Typography
-                    variant="caption"
-                    style={{ color: theme.palette.text.primary }}
-                  >
-                    {`${tooltip.id}: ${tooltip.value}`}
-                  </Typography>
+                  <strong>{`${tooltip.id}: ${tooltip.value}`}</strong>
+                  <br />
+                  <strong>{`Time: ${tooltip.indexValue}`}</strong>
                 </div>
               )}
             />
@@ -392,7 +435,7 @@ const DetailUsia = () => {
                 type: "linear",
                 min: "auto",
                 max: "auto",
-                stacked: false,
+                stacked: true,
                 reverse: false,
               }}
               axisTop={null}
@@ -430,7 +473,7 @@ const DetailUsia = () => {
                   itemDirection: "left-to-right",
                   itemWidth: 80,
                   itemHeight: 20,
-                  itemOpacity: 0.75,
+                  itemOpacity: 1,
                   symbolSize: 12,
                   symbolShape: "circle",
                   symbolBorderColor: "rgba(0, 0, 0, .5)",
@@ -438,8 +481,7 @@ const DetailUsia = () => {
                     {
                       on: "hover",
                       style: {
-                        itemBackground: "rgba(0, 0, 0, .03)",
-                        itemOpacity: 1,
+                        itemTextColor: theme.palette.primary.main,
                       },
                     },
                   ],
@@ -447,7 +489,7 @@ const DetailUsia = () => {
               ]}
               motionConfig="gentle"
               animate={true}
-              tooltip={(tooltip) => (
+              tooltip={({ point }) => (
                 <div
                   style={{
                     background: theme.palette.background.alt,
@@ -456,12 +498,9 @@ const DetailUsia = () => {
                     boxShadow: `0px 2px 10px ${theme.palette.secondary[200]}`,
                   }}
                 >
-                  <Typography
-                    variant="caption"
-                    style={{ color: theme.palette.text.primary }}
-                  >
-                    {`${tooltip.point.serieId}: ${tooltip.point.data.y}`}
-                  </Typography>
+                  <strong>{`Time: ${point.data.x}`}</strong>
+                  <br />
+                  <strong>{`Visitors: ${point.data.y}`}</strong>
                 </div>
               )}
             />

@@ -62,8 +62,17 @@ const DetailEkspresi = ({ isSidebarOpen }) => {
 
         if (payloadData) {
           setData(payloadData);
-          setAvailableTimeFrames(payloadData.map((item) => item._id));
           setIsLoading(false);
+          if (timeFrame === "Daily") {
+            const sortedTimeFrames = payloadData.map((item) => item._id).sort((a, b) => {
+              const dateA = new Date(a.split('/').reverse().join('-'));
+              const dateB = new Date(b.split('/').reverse().join('-'));
+              return dateA - dateB;
+            });
+            setAvailableTimeFrames(sortedTimeFrames);
+          } else {
+            setAvailableTimeFrames(payloadData.map((item) => item._id));
+          }
         }
       }
     };
@@ -101,13 +110,46 @@ const DetailEkspresi = ({ isSidebarOpen }) => {
   };
 
   const filterDataByTimeFrame = () => {
-    if (!startTimeFrame || !endTimeFrame) return data;
+    if (timeFrame === "Daily") {
+      let filteredData = [...data];
+  
+      if (startTimeFrame && endTimeFrame) {
+        filteredData = data.filter((item) => {
+          const itemDate = new Date(item._id.split('/').reverse().join('-'));
+          const startDate = new Date(startTimeFrame.split('/').reverse().join('-'));
+          const endDate = new Date(endTimeFrame.split('/').reverse().join('-'));
+          
+          return itemDate >= startDate && itemDate <= endDate;
+        });
+      }
+  
+      return sortData(filteredData);
+    } else if (timeFrame === "Weekly" || timeFrame === "Minute") {
+      let filteredData = [...data];
+  
+      if (startTimeFrame && endTimeFrame) {
+        filteredData = data.filter((item) => {
+          // Adjust this logic based on the actual format of _id for Weekly and Minute
+          const itemDate = new Date(item._id); // Assuming _id is directly a valid date format
+          const startDate = new Date(startTimeFrame);
+          const endDate = new Date(endTimeFrame);
+          
+          return itemDate >= startDate && itemDate <= endDate;
+        });
+      }
+  
+      return filteredData;
+    } else {
+      return data;
+    }
+  };
 
-    const startIndex = availableTimeFrames.indexOf(startTimeFrame);
-    const endIndex = availableTimeFrames.indexOf(endTimeFrame);
-    if (startIndex === -1 || endIndex === -1) return data;
-
-    return data.slice(startIndex, endIndex + 1);
+  const sortData = (data) => {
+    return [...data].sort((a, b) => {
+      const dateA = new Date(a._id.split('/').reverse().join('-'));
+      const dateB = new Date(b._id.split('/').reverse().join('-'));
+      return dateA - dateB;
+    });
   };
 
   const processDataForBarChart = () => {
@@ -341,12 +383,12 @@ const DetailEkspresi = ({ isSidebarOpen }) => {
               ]}
               tooltip={(tooltip) => (
                 <div
-                  style={{
-                    padding: "12px",
-                    background: theme.palette.background.paper,
-                    border: `1px solid ${theme.palette.secondary[200]}`,
-                    color: theme.palette.text.primary,
-                  }}
+                style={{
+                  background: theme.palette.background.alt,
+                  padding: "6px 9px",
+                  borderRadius: "4px",
+                  boxShadow: `0px 2px 10px ${theme.palette.secondary[200]}`,
+                }}
                 >
                   <strong>{`${tooltip.id}: ${tooltip.value}`}</strong>
                   <br />
@@ -376,7 +418,7 @@ const DetailEkspresi = ({ isSidebarOpen }) => {
           >
             <ResponsiveLine
               data={processDataForLineChart()}
-              margin={{ top: 50, right: 130, bottom: 50, left: 60 }}
+              margin={{ top: 50, right: 110, bottom: 50, left: 60 }}
               xScale={{ type: "point" }}
               yScale={{
                 type: "linear",
@@ -389,17 +431,14 @@ const DetailEkspresi = ({ isSidebarOpen }) => {
               axisTop={null}
               axisRight={null}
               axisBottom={{
-                orient: "bottom",
                 tickSize: 5,
                 tickPadding: 5,
                 tickRotation: 0,
                 legend: `${timeFrame}`,
                 legendOffset: 36,
                 legendPosition: "middle",
-                tickValues: data.map((item) => item._id),
               }}
               axisLeft={{
-                orient: "left",
                 tickSize: 5,
                 tickPadding: 5,
                 tickRotation: 0,
@@ -409,13 +448,13 @@ const DetailEkspresi = ({ isSidebarOpen }) => {
               }}
               colors={{ scheme: "nivo" }}
               pointSize={10}
-              pointColor={{ theme: "background" }}
+              pointColor={{ from: "color", modifiers: [] }}
               pointBorderWidth={2}
               pointBorderColor={{ from: "serieColor" }}
               pointLabelYOffset={-12}
               useMesh={true}
-              enableGridX={false} // Disable x-axis grid lines
-              enableGridY={false} // Disable y-axis grid lines
+              enableGridX={true} // Disable x-axis grid lines
+              enableGridY={true} // Disable y-axis grid lines
               animate={true} // Enable animation
               motionConfig="gentle" // Nivo built-in animation
               theme={{
@@ -454,9 +493,10 @@ const DetailEkspresi = ({ isSidebarOpen }) => {
               tooltip={({ point }) => (
                 <div
                   style={{
-                    padding: "12px",
-                    background: theme.palette.background.paper,
-                    border: `1px solid ${theme.palette.secondary[200]}`,
+                    background: theme.palette.background.alt,
+                    padding: "6px 9px",
+                    borderRadius: "4px",
+                    boxShadow: `0px 2px 10px ${theme.palette.secondary[200]}`,
                   }}
                 >
                   <strong>{`Time: ${point.data.x}`}</strong>

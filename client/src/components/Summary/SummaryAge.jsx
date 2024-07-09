@@ -52,7 +52,14 @@ const SummaryAge = () => {
   }, [dispatch]);
 
   const processDataForBarChart = () => {
-    return ageData.map((item, index) => ({
+    const sortedData = [...ageData].sort((a, b) => {
+      const dateA = new Date(a._id.split('/').reverse().join('-'));
+      const dateB = new Date(b._id.split('/').reverse().join('-'));
+      return dateA - dateB;
+    });
+
+    return sortedData.map((item, index) => ({
+      _id: item._id,
       day: `Day ${index + 1}`,
       Anak: item.totalAnak,
       Remaja: item.totalRemaja,
@@ -168,7 +175,7 @@ const SummaryAge = () => {
             <ResponsiveBar
               data={processDataForBarChart()}
               keys={["Anak", "Remaja", "Dewasa", "Lansia"]}
-              indexBy="day"
+              indexBy="_id"
               margin={{ top: 50, right: 130, bottom: 50, left: 60 }}
               padding={0.3}
               colors={{ scheme: "nivo" }}
@@ -224,7 +231,7 @@ const SummaryAge = () => {
                 tickSize: 5,
                 tickPadding: 5,
                 tickRotation: 0,
-                legend: "Count",
+                legend: "Number of Visitors",
                 legendPosition: "middle",
                 legendOffset: -40,
               }}

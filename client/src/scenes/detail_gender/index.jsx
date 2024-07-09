@@ -63,8 +63,17 @@ const DetailGender = ({ isSidebarOpen }) => {
 
         if (payloadData) {
           setData(payloadData);
-          setAvailableTimeFrames(payloadData.map((item) => item._id));
           setIsLoading(false);
+          if (timeFrame === "Daily") {
+            const sortedTimeFrames = payloadData.map((item) => item._id).sort((a, b) => {
+              const dateA = new Date(a.split('/').reverse().join('-'));
+              const dateB = new Date(b.split('/').reverse().join('-'));
+              return dateA - dateB;
+            });
+            setAvailableTimeFrames(sortedTimeFrames);
+          } else {
+            setAvailableTimeFrames(payloadData.map((item) => item._id));
+          }
         }
       }
     };
@@ -102,13 +111,46 @@ const DetailGender = ({ isSidebarOpen }) => {
   };
 
   const filterDataByTimeFrame = () => {
-    if (!startTimeFrame || !endTimeFrame) return data;
+    if (timeFrame === "Daily") {
+      let filteredData = [...data];
+  
+      if (startTimeFrame && endTimeFrame) {
+        filteredData = data.filter((item) => {
+          const itemDate = new Date(item._id.split('/').reverse().join('-'));
+          const startDate = new Date(startTimeFrame.split('/').reverse().join('-'));
+          const endDate = new Date(endTimeFrame.split('/').reverse().join('-'));
+          
+          return itemDate >= startDate && itemDate <= endDate;
+        });
+      }
+  
+      return sortData(filteredData);
+    } else if (timeFrame === "Weekly" || timeFrame === "Minute") {
+      let filteredData = [...data];
+  
+      if (startTimeFrame && endTimeFrame) {
+        filteredData = data.filter((item) => {
+          // Adjust this logic based on the actual format of _id for Weekly and Minute
+          const itemDate = new Date(item._id); // Assuming _id is directly a valid date format
+          const startDate = new Date(startTimeFrame);
+          const endDate = new Date(endTimeFrame);
+          
+          return itemDate >= startDate && itemDate <= endDate;
+        });
+      }
+  
+      return filteredData;
+    } else {
+      return data;
+    }
+  };
 
-    const startIndex = availableTimeFrames.indexOf(startTimeFrame);
-    const endIndex = availableTimeFrames.indexOf(endTimeFrame);
-    if (startIndex === -1 || endIndex === -1) return data;
-
-    return data.slice(startIndex, endIndex + 1);
+  const sortData = (data) => {
+    return [...data].sort((a, b) => {
+      const dateA = new Date(a._id.split('/').reverse().join('-'));
+      const dateB = new Date(b._id.split('/').reverse().join('-'));
+      return dateA - dateB;
+    });
   };
 
   const processDataForBarChart = () => {
@@ -322,6 +364,20 @@ const DetailGender = ({ isSidebarOpen }) => {
                   ],
                 },
               ]}
+              tooltip={(tooltip) => (
+                <div
+                style={{
+                  background: theme.palette.background.alt,
+                  padding: "6px 9px",
+                  borderRadius: "4px",
+                  boxShadow: `0px 2px 10px ${theme.palette.secondary[200]}`,
+                }}
+                >
+                  <strong>{`${tooltip.id}: ${tooltip.value}`}</strong>
+                  <br />
+                  <strong>{`Time: ${tooltip.indexValue}`}</strong>
+                </div>
+              )}
             />
           </Box>
         </Grid>
@@ -334,7 +390,7 @@ const DetailGender = ({ isSidebarOpen }) => {
           >
             <ResponsiveLine
               data={processDataForLineChart()}
-              margin={{ top: 50, right: 130, bottom: 80, left: 60 }} // Adjusted bottom margin for rotated labels
+              margin={{ top: 50, right: 110, bottom: 50, left: 60 }} // Adjusted bottom margin for rotated labels
               xScale={{ type: "point" }}
               yScale={{
                 type: "linear",
@@ -347,22 +403,14 @@ const DetailGender = ({ isSidebarOpen }) => {
               axisTop={null}
               axisRight={null}
               axisBottom={{
-                orient: "bottom",
                 tickSize: 5,
                 tickPadding: 5,
-                tickRotation: -45, // Rotate labels by 45 degrees for better spacing
+                tickRotation: 0, // Rotate labels by 45 degrees for better spacing
                 legend: `${timeFrame}`,
-                legendOffset: 60, // Adjusted offset to fit rotated labels
+                legendOffset: 36, // Adjusted offset to fit rotated labels
                 legendPosition: "middle",
-                // Reduce the number of ticks by showing only every nth label
-                tickValues: data
-                  .filter(
-                    (item, index) => index % Math.ceil(data.length / 10) === 0
-                  )
-                  .map((item) => item._id),
               }}
               axisLeft={{
-                orient: "left",
                 tickSize: 5,
                 tickPadding: 5,
                 tickRotation: 0,
@@ -406,22 +454,22 @@ const DetailGender = ({ isSidebarOpen }) => {
               }}
               lineWidth={3}
               pointSize={10}
-              pointColor={{ theme: "background" }}
+              pointColor={{ from: "color", modifiers: [] }}
               pointBorderWidth={2}
               pointBorderColor={{ from: "serieColor" }}
               pointLabelYOffset={-12}
-              enableGridX={false}
-              enableGridY={false}
-              enablePoints={true}
+              enableGridX={true}
+              enableGridY={true}
               useMesh={true}
               tooltip={({ point }) => (
                 <div
-                  style={{
-                    padding: "12px",
-                    background: theme.palette.background.paper,
-                    border: `1px solid ${theme.palette.secondary[200]}`,
-                  }}
-                >
+                style={{
+                  background: theme.palette.background.alt,
+                  padding: "6px 9px",
+                  borderRadius: "4px",
+                  boxShadow: `0px 2px 10px ${theme.palette.secondary[200]}`,
+                }}
+              >
                   <strong>{`Time: ${point.data.x}`}</strong>
                   <br />
                   <strong>{`Visitors: ${point.data.y}`}</strong>
