@@ -1,18 +1,58 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
   Box,
   CircularProgress,
   Typography,
-  useTheme,
   Grid,
+  Paper,
+  useTheme,
+  useMediaQuery,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
+  Button,
 } from "@mui/material";
+import ChildCareIcon from "@mui/icons-material/ChildCare";
+import EmojiPeopleIcon from "@mui/icons-material/EmojiPeople";
+import PersonIcon from "@mui/icons-material/Person";
+import ElderlyIcon from "@mui/icons-material/Elderly";
 import { ResponsiveBar } from "@nivo/bar";
 import { useStateContextAge } from "state/StateContextAge";
+
+const Card = ({ title, value, icon: Icon, theme }) => (
+  <Paper
+    sx={{
+      width: 250,
+      height: 100,
+      p: 2,
+      borderRadius: 2,
+      backgroundColor: theme.palette.background.alt,
+      boxShadow: "0 0 10px 0 rgba(0,0,0,0.5)",
+      display: "flex",
+      alignItems: "center",
+      m: 1,
+      color: theme.palette.getContrastText(theme.palette.background.alt),
+    }}
+  >
+    <Icon sx={{ fontSize: 40, color: theme.palette.secondary[200], mr: 2 }} />
+    <Box>
+      <Typography variant="subtitle2">{title}</Typography>
+      <Typography variant="h5" fontWeight="bold">
+        {value}
+      </Typography>
+    </Box>
+  </Paper>
+);
 
 const SummaryAge = () => {
   const theme = useTheme();
   const { state, dispatch } = useStateContextAge();
   const { ageData, isLoading, error } = state;
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
+
+  const [selectedMetric, setSelectedMetric] = useState("average");
+  const [isExpanded, setIsExpanded] = useState(false);
 
   useEffect(() => {
     const socketAge = new WebSocket("ws://localhost:5001/agedailies");
@@ -53,8 +93,8 @@ const SummaryAge = () => {
 
   const processDataForBarChart = () => {
     const sortedData = [...ageData].sort((a, b) => {
-      const dateA = new Date(a._id.split('/').reverse().join('-'));
-      const dateB = new Date(b._id.split('/').reverse().join('-'));
+      const dateA = new Date(a._id.split("/").reverse().join("-"));
+      const dateB = new Date(b._id.split("/").reverse().join("-"));
       return dateA - dateB;
     });
 
@@ -68,6 +108,14 @@ const SummaryAge = () => {
     }));
   };
 
+  const sortedData = useMemo(() => {
+    return [...ageData].sort((a, b) => {
+      const dateA = new Date(a._id.split("/").reverse().join("-"));
+      const dateB = new Date(b._id.split("/").reverse().join("-"));
+      return dateA - dateB;
+    });
+  }, [ageData]);
+
   const totalAnak = ageData.reduce((sum, item) => sum + item.totalAnak, 0);
   const totalRemaja = ageData.reduce((sum, item) => sum + item.totalRemaja, 0);
   const totalDewasa = ageData.reduce((sum, item) => sum + item.totalDewasa, 0);
@@ -78,216 +126,344 @@ const SummaryAge = () => {
   const avgDewasa = totalDays > 0 ? (totalDewasa / totalDays).toFixed(2) : 0;
   const avgLansia = totalDays > 0 ? (totalLansia / totalDays).toFixed(2) : 0;
 
+  const latestDay = sortedData[sortedData.length - 1] || {};
+  const latestAnak = latestDay.totalAnak || 0;
+  const latestRemaja = latestDay.totalRemaja || 0;
+  const latestDewasa = latestDay.totalDewasa || 0;
+  const latestLansia = latestDay.totalLansia || 0;
+
   if (isLoading) return <CircularProgress />;
   if (error) return <Typography color="error">{error}</Typography>;
 
+  const renderMetrics = () => {
+    switch (selectedMetric) {
+      case "average":
+        return (
+          <>
+            <Card
+              title="Average Anak"
+              value={avgAnak}
+              icon={ChildCareIcon}
+              theme={theme}
+            />
+            <Card
+              title="Average Remaja"
+              value={avgRemaja}
+              icon={EmojiPeopleIcon}
+              theme={theme}
+            />
+            <Card
+              title="Average Dewasa"
+              value={avgDewasa}
+              icon={PersonIcon}
+              theme={theme}
+            />
+            <Card
+              title="Average Lansia"
+              value={avgLansia}
+              icon={ElderlyIcon}
+              theme={theme}
+            />
+          </>
+        );
+      case "latest":
+        return (
+          <>
+            <Card
+              title="Latest Anak"
+              value={latestAnak}
+              icon={ChildCareIcon}
+              theme={theme}
+            />
+            <Card
+              title="Latest Remaja"
+              value={latestRemaja}
+              icon={EmojiPeopleIcon}
+              theme={theme}
+            />
+            <Card
+              title="Latest Dewasa"
+              value={latestDewasa}
+              icon={PersonIcon}
+              theme={theme}
+            />
+            <Card
+              title="Latest Lansia"
+              value={latestLansia}
+              icon={ElderlyIcon}
+              theme={theme}
+            />
+          </>
+        );
+      case "total":
+        return (
+          <>
+            <Card
+              title="Total Anak"
+              value={totalAnak}
+              icon={ChildCareIcon}
+              theme={theme}
+            />
+            <Card
+              title="Total Remaja"
+              value={totalRemaja}
+              icon={EmojiPeopleIcon}
+              theme={theme}
+            />
+            <Card
+              title="Total Dewasa"
+              value={totalDewasa}
+              icon={PersonIcon}
+              theme={theme}
+            />
+            <Card
+              title="Total Lansia (Per Week)"
+              value={totalLansia}
+              icon={ElderlyIcon}
+              theme={theme}
+            />
+          </>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
-    <Box>
-      <Typography variant="h6" align="center" gutterBottom>
-        Summary Age
-      </Typography>
-      <Grid container spacing={3}>
-        <Grid item xs={12} sm={6}>
-          <Box
-            bgcolor={theme.palette.primary.main}
-            color={theme.palette.primary.contrastText}
-            p={2}
-            borderRadius={2}
-            textAlign="center"
+    <Grid container spacing={isSmallScreen ? 2 : 4}>
+      <Grid item xs={12} display="flex" justifyContent="left">
+        <FormControl variant="outlined" sx={{ minWidth: 120 }}>
+          <InputLabel>Metric</InputLabel>
+          <Select
+            value={selectedMetric}
+            onChange={(e) => setSelectedMetric(e.target.value)}
+            label="Metric"
           >
-            <Typography variant="subtitle1">Rata-rata Umur/Hari</Typography>
-            <Grid container spacing={1} justifyContent="center">
-              <Grid item xs={6}>
-                <Typography variant="body1">Anak: {avgAnak}</Typography>
-                <Typography variant="body1">Remaja: {avgRemaja}</Typography>
-              </Grid>
-              <Grid item xs={6}>
-                <Typography variant="body1">Dewasa: {avgDewasa}</Typography>
-                <Typography variant="body1">Lansia: {avgLansia}</Typography>
-              </Grid>
-            </Grid>
-          </Box>
+            <MenuItem value="average">Average</MenuItem>
+            <MenuItem value="latest">Latest</MenuItem>
+            <MenuItem value="total">Total</MenuItem>
+          </Select>
+        </FormControl>
+      </Grid>
+      <Grid item xs={12}>
+        <Typography variant="h4" align="center" gutterBottom>
+          Summary Age
+        </Typography>
+      </Grid>
+      {/* <Grid item xs={12} display="flex" justifyContent="left">
+        <Button variant="contained" onClick={() => setIsExpanded(!isExpanded)}>
+          {isExpanded ? "Collapse" : "Expand"}
+        </Button>
+      </Grid> */}
+      <Grid item xs={12}>
+        <Grid container justifyContent="left">
+          {renderMetrics()}
+          {isExpanded && (
+            <>
+              {selectedMetric !== "average" && (
+                <>
+                  <Card
+                    title="Average Anak"
+                    value={avgAnak}
+                    icon={ChildCareIcon}
+                    theme={theme}
+                  />
+                  <Card
+                    title="Average Remaja"
+                    value={avgRemaja}
+                    icon={EmojiPeopleIcon}
+                    theme={theme}
+                  />
+                  <Card
+                    title="Average Dewasa"
+                    value={avgDewasa}
+                    icon={PersonIcon}
+                    theme={theme}
+                  />
+                  <Card
+                    title="Average Lansia"
+                    value={avgLansia}
+                    icon={ElderlyIcon}
+                    theme={theme}
+                  />
+                </>
+              )}
+              {selectedMetric !== "latest" && (
+                <>
+                  <Card
+                    title="Latest Anak"
+                    value={latestAnak}
+                    icon={ChildCareIcon}
+                    theme={theme}
+                  />
+                  <Card
+                    title="Latest Remaja"
+                    value={latestRemaja}
+                    icon={EmojiPeopleIcon}
+                    theme={theme}
+                  />
+                  <Card
+                    title="Latest Dewasa"
+                    value={latestDewasa}
+                    icon={PersonIcon}
+                    theme={theme}
+                  />
+                  <Card
+                    title="Latest Lansia"
+                    value={latestLansia}
+                    icon={ElderlyIcon}
+                    theme={theme}
+                  />
+                </>
+              )}
+              {selectedMetric !== "total" && (
+                <>
+                  <Card
+                    title="Total Anak (Per Week)"
+                    value={totalAnak}
+                    icon={ChildCareIcon}
+                    theme={theme}
+                  />
+                  <Card
+                    title="Total Remaja (Per Week)"
+                    value={totalRemaja}
+                    icon={EmojiPeopleIcon}
+                    theme={theme}
+                  />
+                  <Card
+                    title="Total Dewasa (Per Week)"
+                    value={totalDewasa}
+                    icon={PersonIcon}
+                    theme={theme}
+                  />
+                  <Card
+                    title="Total Lansia (Per Week)"
+                    value={totalLansia}
+                    icon={ElderlyIcon}
+                    theme={theme}
+                  />
+                </>
+              )}
+            </>
+          )}
         </Grid>
-        <Grid item xs={12} sm={6}>
-          <Box
-            bgcolor={theme.palette.primary.main}
-            color={theme.palette.primary.contrastText}
-            p={2}
-            borderRadius={2}
-            textAlign="center"
-          >
-            <Typography variant="subtitle1">Umur/Hari (Terbaru)</Typography>
-            {ageData.length > 0 ? (
-              <Grid container spacing={1} justifyContent="center">
-                <Grid item xs={6}>
-                  <Typography variant="body1">
-                    Anak: {ageData[ageData.length - 1].totalAnak}
-                  </Typography>
-                  <Typography variant="body1">
-                    Remaja: {ageData[ageData.length - 1].totalRemaja}
-                  </Typography>
-                </Grid>
-                <Grid item xs={6}>
-                  <Typography variant="body1">
-                    Dewasa: {ageData[ageData.length - 1].totalDewasa}
-                  </Typography>
-                  <Typography variant="body1">
-                    Lansia: {ageData[ageData.length - 1].totalLansia}
-                  </Typography>
-                </Grid>
-              </Grid>
-            ) : (
-              <Typography variant="body1">No data available</Typography>
-            )}
-          </Box>
-        </Grid>
-        <Grid item xs={12}>
-          <Box
-            bgcolor={theme.palette.primary.main}
-            color={theme.palette.primary.contrastText}
-            p={2}
-            borderRadius={2}
-            textAlign="center"
-          >
-            <Typography variant="subtitle1">Total Umur (Per Minggu)</Typography>
-            <Grid container spacing={1} justifyContent="center">
-              <Grid item xs={6}>
-                <Typography variant="body1">Anak: {totalAnak}</Typography>
-                <Typography variant="body1">Remaja: {totalRemaja}</Typography>
-              </Grid>
-              <Grid item xs={6}>
-                <Typography variant="body1">Dewasa: {totalDewasa}</Typography>
-                <Typography variant="body1">Lansia: {totalLansia}</Typography>
-              </Grid>
-            </Grid>
-          </Box>
-        </Grid>
-        <Grid item xs={12}>
-          <Typography variant="h6" align="center" gutterBottom>
-            Chart Umur Mingguan
-          </Typography>
-          <Box
-            height={300}
-            border="1px solid #ccc"
-            borderRadius="4px"
-            boxShadow={2}
-          >
-            <ResponsiveBar
-              data={processDataForBarChart()}
-              keys={["Anak", "Remaja", "Dewasa", "Lansia"]}
-              indexBy="_id"
-              margin={{ top: 50, right: 130, bottom: 50, left: 60 }}
-              padding={0.3}
-              colors={{ scheme: "nivo" }}
-              theme={{
-                axis: {
-                  domain: {
-                    line: {
-                      stroke: theme.palette.secondary[200],
-                    },
-                  },
-                  legend: {
-                    text: {
-                      fill: theme.palette.secondary[200],
-                    },
-                  },
-                  ticks: {
-                    line: {
-                      stroke: theme.palette.secondary[200],
-                      strokeWidth: 1,
-                    },
-                    text: {
-                      fill: theme.palette.secondary[200],
-                    },
+      </Grid>
+      <Grid item xs={12}>
+        <Box sx={{ height: 400 }}>
+          <ResponsiveBar
+            data={processDataForBarChart()}
+            keys={["Anak", "Remaja", "Dewasa", "Lansia"]}
+            indexBy="_id"
+            margin={{ top: 50, right: 130, bottom: 50, left: 60 }}
+            padding={0.3}
+            colors={{ scheme: "nivo" }}
+            theme={{
+              axis: {
+                domain: {
+                  line: {
+                    stroke: theme.palette.secondary[200],
                   },
                 },
-                legends: {
+                legend: {
                   text: {
                     fill: theme.palette.secondary[200],
                   },
                 },
-                tooltip: {
-                  container: {
-                    background: theme.palette.primary.main,
-                    color: theme.palette.primary.contrastText,
+                ticks: {
+                  line: {
+                    stroke: theme.palette.secondary[200],
+                    strokeWidth: 1,
+                  },
+                  text: {
+                    fill: theme.palette.secondary[200],
                   },
                 },
-              }}
-              borderColor={{
-                from: "color",
-                modifiers: [["darker", 1.6]],
-              }}
-              axisTop={null}
-              axisRight={null}
-              axisBottom={{
-                tickSize: 5,
-                tickPadding: 5,
-                tickRotation: 0,
-                legend: "Day",
-                legendPosition: "middle",
-                legendOffset: 32,
-              }}
-              axisLeft={{
-                tickSize: 5,
-                tickPadding: 5,
-                tickRotation: 0,
-                legend: "Number of Visitors",
-                legendPosition: "middle",
-                legendOffset: -40,
-              }}
-              labelSkipWidth={12}
-              labelSkipHeight={12}
-              labelTextColor={{ from: "color", modifiers: [["darker", 1.6]] }}
-              animate={true}
-              motionStiffness={90}
-              motionDamping={15}
-              tooltip={(tooltip) => (
-                <div
-                  style={{
-                    background: theme.palette.background.alt,
-                    padding: "6px 9px",
-                    borderRadius: "4px",
-                    boxShadow: `0px 2px 10px ${theme.palette.secondary[200]}`,
-                  }}
-                >
-                  <Typography
-                    variant="caption"
-                    style={{ color: theme.palette.text.primary }}
-                  >
-                    {`${tooltip.id}: ${tooltip.value}`}
-                  </Typography>
-                </div>
-              )}
-              legends={[
-                {
-                  dataFrom: "keys",
-                  anchor: "top-right",
-                  direction: "column",
-                  justify: false,
-                  translateX: 120,
-                  translateY: 0,
-                  itemsSpacing: 2,
-                  itemWidth: 100,
-                  itemHeight: 20,
-                  itemDirection: "left-to-right",
-                  itemTextColor: theme.palette.secondary[200],
-                  symbolSize: 20,
-                  effects: [
-                    {
-                      on: "hover",
-                      style: {
-                        itemTextColor: theme.palette.secondary[400],
-                      },
-                    },
-                  ],
+              },
+              legends: {
+                text: {
+                  fill: theme.palette.secondary[200],
                 },
-              ]}
-            />
-          </Box>
-          <Box mt="20px"></Box>
-        </Grid>
+              },
+              tooltip: {
+                container: {
+                  background: theme.palette.primary.main,
+                  color: theme.palette.primary.contrastText,
+                },
+              },
+            }}
+            borderColor={{
+              from: "color",
+              modifiers: [["darker", 1.6]],
+            }}
+            axisTop={null}
+            axisRight={null}
+            axisBottom={{
+              tickSize: 5,
+              tickPadding: 5,
+              tickRotation: 0,
+              legend: "Day",
+              legendPosition: "middle",
+              legendOffset: 32,
+            }}
+            axisLeft={{
+              tickSize: 5,
+              tickPadding: 5,
+              tickRotation: 0,
+              legend: "Number of Visitor",
+              legendPosition: "middle",
+              legendOffset: -40,
+            }}
+            labelSkipWidth={12}
+            labelSkipHeight={12}
+            labelTextColor={{ from: "color", modifiers: [["darker", 1.6]] }}
+            animate={true}
+            motionStiffness={90}
+            motionDamping={15}
+            tooltip={(tooltip) => (
+              <div
+                style={{
+                  background: theme.palette.background.alt,
+                  padding: "6px 9px",
+                  borderRadius: "4px",
+                  boxShadow: `0px 2px 10px ${theme.palette.secondary[200]}`,
+                }}
+              >
+                <Typography
+                  variant="caption"
+                  style={{ color: theme.palette.text.primary }}
+                >
+                  {`${tooltip.id}: ${tooltip.value}`}
+                </Typography>
+              </div>
+            )}
+            legends={[
+              {
+                dataFrom: "keys",
+                anchor: "top-right",
+                direction: "column",
+                justify: false,
+                translateX: 120,
+                translateY: 0,
+                itemsSpacing: 2,
+                itemWidth: 100,
+                itemHeight: 20,
+                itemDirection: "left-to-right",
+                itemTextColor: theme.palette.secondary[200],
+                symbolSize: 20,
+                effects: [
+                  {
+                    on: "hover",
+                    style: {
+                      itemTextColor: theme.palette.secondary[400],
+                    },
+                  },
+                ],
+              },
+            ]}
+          />
+        </Box>
       </Grid>
-    </Box>
+    </Grid>
   );
 };
 

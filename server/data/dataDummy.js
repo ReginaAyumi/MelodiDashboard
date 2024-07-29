@@ -68,17 +68,95 @@ export const dataFeedback = [
 ]
 
 export const dataClickStream = [
-    {_id: 'dc1', page: "/home", clickDate: "2024-05-01", VisitorId: "dv1"},
-    {_id: 'dc2', page: "/home", clickDate: "2024-05-01", VisitorId: "dv2"},
-    {_id: 'dc3', page: "/home", clickDate: "2024-05-02", VisitorId: "dv3"},
-    {_id: 'dc4', page: "/home", clickDate: "2024-05-03", VisitorId: "dv4"},
-    {_id: 'dc5', page: "/home", clickDate: "2024-05-03", VisitorId: "dv5"},
-    {_id: 'dc6', page: "/home", clickDate: "2024-05-05", VisitorId: "dv6"},
-    {_id: 'dc7', page: "/home", clickDate: "2024-05-05", VisitorId: "dv7"},
-    {_id: 'dc8', page: "/home", clickDate: "2024-05-05", VisitorId: "dv8"},
-    {_id: 'dc9', page: "/home", clickDate: "2024-05-05", VisitorId: "dv9"},
-    {_id: 'dc10', page: "/home", clickDate: "2024-05-05", VisitorId: "dv10"},
-]
+    {
+        clickstreamId: 'dc1',
+        VisitorId: 'dv1',
+        clicks: [
+            { visited_url: '/animals', clickDate: '2024-06-01T08:25:00Z' },
+            { visited_url: '/animals/detail/2', clickDate: '2024-06-01T08:30:50Z' },
+            { visited_url: '/animals/feedback', clickDate: '2024-06-01T08:45:50Z' },
+        ]
+    },
+    {
+        clickstreamId: 'dc2',
+        VisitorId: 'dv2',
+        clicks: [
+            { visited_url: '/maps', clickDate: '2024-06-01T13:30:00Z' },
+            { visited_url: '/maps/detail/2', clickDate: '2024-06-01T13:30:00Z' },
+            { visited_url: '/feedback', clickDate: '2024-06-01T13:32:00Z' },
+        ]
+    },
+    {
+        clickstreamId: 'dc3',
+        VisitorId: 'dv3',
+        clicks: [
+            { visited_url: '/public-facilities', clickDate: '2024-06-02T10:00:00Z' },
+            { visited_url: '/public-facilities/detail/5', clickDate: '2024-06-02T12:30:00Z' },
+            { visited_url: '/public-facilities/detail/3', clickDate: '2024-06-03T15:15:00Z' },
+            { visited_url: '/public-facilities/feedback', clickDate: '2024-06-02T18:45:00Z' }
+        ]
+    },
+    {
+        clickstreamId: 'dc4',
+        VisitorId: 'dv4',
+        clicks: [
+            { visited_url: '/food-store', clickDate: '2024-06-03T08:30:00Z' },
+            { visited_url: '/food-store/feedback', clickDate: '2024-06-03T11:00:00Z' },
+        ]
+    },
+    {
+        clickstreamId: 'dc5',
+        VisitorId: 'dv5',
+        clicks: [
+            { visited_url: '/animals', clickDate: '2024-06-03T09:45:00Z' },
+            { visited_url: '/feedback', clickDate: '2024-06-03T13:15:00Z' },
+        ]
+    },
+    {
+        clickstreamId: 'dc6',
+        VisitorId: 'dv6',
+        clicks: [
+            { visited_url: '/feedback', clickDate: '2024-06-05T08:30:00Z' },
+        ]
+    },
+    {
+        clickstreamId: 'dc7',
+        VisitorId: 'dv7',
+        clicks: [
+            { visited_url: '/food-store/', clickDate: '2024-06-05T09:00:00Z' },
+            { visited_url: '/food-store/detail/2', clickDate: '2024-06-05T12:00:00Z' },
+            { visited_url: '/food-store/detail/4', clickDate: '2024-06-05T14:30:00Z' },
+            { visited_url: '/food-store/feedback', clickDate: '2024-06-05T17:15:00Z' }
+        ]
+    },
+    {
+        clickstreamId: 'dc8',
+        VisitorId: 'dv8',
+        clicks: [
+            { visited_url: '/public-facilities', clickDate: '2024-06-05T08:45:00Z' },
+            { visited_url: '/public-facilities/detail/6', clickDate: '2024-06-05T11:30:00Z' },
+            { visited_url: '/feedback', clickDate: '2024-06-05T14:00:00Z' },
+        ]
+    },
+    {
+        clickstreamId: 'dc9',
+        VisitorId: 'dv9',
+        clicks: [
+            { visited_url: '/feedback', clickDate: '2024-06-05T09:30:00Z' },
+        ]
+    },
+    {
+        clickstreamId: 'dc10',
+        VisitorId: 'dv10',
+        clicks: [
+            { visited_url: '/animals', clickDate: '2024-06-05T08:00:00Z' },
+            { visited_url: '/animals/detail/1', clickDate: '2024-06-05T11:30:00Z' },
+            { visited_url: '/animals/detail/2', clickDate: '2024-06-05T14:15:00Z' },
+            { visited_url: '/animals/feedback', clickDate: '2024-06-05T16:30:00Z' }
+        ]
+    }
+];
+
 
 export const overallStats = [
     { _id: 'os1', totalVisitors: 150, overallFeedback: 'Positive', mostClicked: 'HomePage', adminId: 'ua1' },

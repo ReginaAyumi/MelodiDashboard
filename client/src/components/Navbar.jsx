@@ -10,9 +10,12 @@ import {
   SettingsOutlined,
   ArrowDropDownOutlined,
 } from "@mui/icons-material";
+import Avatar from "@mui/material/Avatar";
+import { deepPurple } from "@mui/material/colors";
 import FlexBetween from "components/FlexBetween";
 import { setMode, setAdminData } from "state";
 import profileImage from "assets/Profile.jpeg";
+
 import {
   AppBar,
   Button,
@@ -37,20 +40,31 @@ const Navbar = ({ isSidebarOpen, setIsSidebarOpen }) => {
   const handleClick = (event) => setAnchorEl(event.currentTarget);
   const handleClose = () => setAnchorEl(null);
 
+  const getInitials = (name) => {
+    return name
+      .split(" ")
+      .map((word) => word[0])
+      .join("");
+  };
+
   useEffect(() => {
     const fetchAdminData = async () => {
       if (!adminId) {
-        console.error('adminId is missing');
+        console.error("adminId is missing");
         return;
       }
 
       try {
-        const response = await axios.get(`http://localhost:5001/admins/admin/${adminId}`);
+        const response = await axios.get(
+          `http://localhost:5001/admins/admin/${adminId}`
+        );
         const adminData = response.data;
-        dispatch(setAdminData({ adminId, name: adminData.name, role: adminData.role }));
-        console.log('Admin data:', adminData);
+        dispatch(
+          setAdminData({ adminId, name: adminData.name, role: adminData.role })
+        );
+        console.log("Admin data:", adminData);
       } catch (error) {
-        console.error('Failed to fetch admin data:', error);
+        console.error("Failed to fetch admin data:", error);
       }
     };
 
@@ -115,15 +129,9 @@ const Navbar = ({ isSidebarOpen, setIsSidebarOpen }) => {
                 gap: "1rem",
               }}
             >
-              <Box
-                component="img"
-                alt="profile"
-                src={profileImage}
-                height="32px"
-                width="32px"
-                borderRadius="50%"
-                sx={{ objectFit: "cover" }}
-              />
+              <Avatar sx={{ bgcolor: deepPurple[500] }}>
+                {name && getInitials(name)}
+              </Avatar>
               <Box textAlign="left">
                 <Typography
                   fontWeight="bold"

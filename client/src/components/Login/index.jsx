@@ -77,12 +77,12 @@ const Login = () => {
         </div>
         <div className={styles.right}>
         <img src={welcomeImage} alt="Welcome" className={styles.welcome_image} />
-          <h1>New Here?</h1>
+          {/* <h1>New Here?</h1>
           <Link to="/signup">
             <button type="button" className={styles.white_btn}>
               Sign Up
             </button>
-          </Link>
+          </Link> */}
         </div>
       </div>
     </div>

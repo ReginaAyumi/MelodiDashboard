@@ -87,10 +87,10 @@ function App() {
                 path="/feedbacks"
                 element={<PrivateRoute element={<Feedbacks />} />}
               />
-              <Route
+              {/* <Route
                 path="/jumlah_pengunjung"
                 element={<PrivateRoute element={<JumlahPengunjung />} />}
-              />
+              /> */}
               <Route
                 path="/overall_feedback"
                 element={<PrivateRoute element={<OverallFeedback />} />}

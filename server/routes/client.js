@@ -4,6 +4,6 @@ import { getVisitor } from "../controllers/general.js";
 
 const router = express.Router();
 
-router.get("/feedbacks", getFeedbacks)
+// router.get("/feedbacks", getFeedbacks)
 
 export default router;

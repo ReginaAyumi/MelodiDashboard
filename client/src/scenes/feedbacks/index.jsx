@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import React from "react";
 import {
   Box,
@@ -11,6 +11,7 @@ import {
   Rating,
   useTheme,
   useMediaQuery,
+  TextField,
 } from "@mui/material";
 import { useGetFeedbacksQuery } from "state/api";
 import Header from "components/Header";
@@ -31,38 +32,46 @@ const Feedback = ({
       sx={{
         backgroundImage: "none",
         backgroundColor: theme.palette.background.alt,
-        borderRadius: "0.55rem",
+        borderRadius: "0.75rem",
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",
+        boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+        transition: "transform 0.3s",
+        "&:hover": {
+          transform: "scale(1.02)",
+        },
       }}
     >
-      <CardContent>
-        <Typography variant="h5" component="div">
-          {feedbackDate}
+      <CardContent sx={{ paddingBottom: "0" }}>
+        <Typography variant="h6" component="div" gutterBottom>
+          {new Date(feedbackDate).toLocaleDateString()}
         </Typography>
         <Rating value={rating} readOnly />
-        <Typography variant="body1">{categories}</Typography>
-        <Typography variant="body2"> Feedback:</Typography>
-        <Typography variant="body2"> {feedbackContent}</Typography>
+        <Typography variant="subtitle1" color="textSecondary" gutterBottom>
+          {categories}
+        </Typography>
+        <Typography variant="body2" gutterBottom>
+          Feedback:
+        </Typography>
+        <Typography variant="body2" color="textSecondary">
+          {feedbackContent}
+        </Typography>
       </CardContent>
-      <CardActions>
+      <CardActions sx={{ padding: "16px" }}>
         <Button
-          variant="contained"
+          variant="outlined"
           size="small"
           onClick={() => setIsExpanded(!isExpanded)}
         >
           {isExpanded ? "See Less" : "See More"}
         </Button>
       </CardActions>
-      <Collapse
-        in={isExpanded}
-        timeout="auto"
-        unmountOnExit
-        sx={{ color: theme.palette.neutral[300] }}
-      >
-        <CardContent>
-          <Typography>Visitor ID: {visitorId}</Typography>
+      <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+        <CardContent sx={{ paddingTop: "0", paddingBottom: "16px" }}>
+          <Typography variant="body2" color="textSecondary">
+            Visitor ID: {visitorId}
+          </Typography>
         </CardContent>
       </Collapse>
     </Card>
@@ -73,6 +82,9 @@ const Feedbacks = () => {
   const { data, isLoading } = useGetFeedbacksQuery();
   const isNotMobile = useMediaQuery("(min-width: 1000px)");
   const [filterCategory, setFilterCategory] = useState(null);
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
+  const [filteredData, setFilteredData] = useState([]);
 
   const handleFilter = (category) => {
     if (filterCategory === category) {
@@ -82,15 +94,53 @@ const Feedbacks = () => {
     }
   };
 
-  // Check if data is undefined or null before filtering
-  const filteredData = data && data.filter(
-    (feedback) =>
-      filterCategory === null || feedback.categories === filterCategory
-  );
+  useEffect(() => {
+    if (data) {
+      let feedbackData = data;
+
+      // Filter by category
+      if (filterCategory) {
+        feedbackData = feedbackData.filter(
+          (feedback) => feedback.categories === filterCategory
+        );
+      }
+
+      // Filter by date range
+      if (startDate && endDate) {
+        feedbackData = feedbackData.filter(({ feedbackDate }) => {
+          const date = new Date(feedbackDate);
+          return date >= new Date(startDate) && date <= new Date(endDate);
+        });
+      }
+
+      setFilteredData(feedbackData);
+    }
+  }, [data, filterCategory, startDate, endDate]);
 
   return (
     <Box m="1.5rem 2.5rem">
       <Header title="FEEDBACKS" subtitle="Melihat feedback dari pengunjung." />
+      <Box mt="20px" display="flex" gap="10px" alignItems="center">
+        {/* Date range input */}
+        <TextField
+          label="Start Date"
+          type="date"
+          value={startDate ? startDate.toISOString().split("T")[0] : ""}
+          onChange={(e) => setStartDate(new Date(e.target.value))}
+          InputLabelProps={{
+            shrink: true,
+          }}
+        />
+        <TextField
+          label="End Date"
+          type="date"
+          value={endDate ? endDate.toISOString().split("T")[0] : ""}
+          onChange={(e) => setEndDate(new Date(e.target.value))}
+          InputLabelProps={{
+            shrink: true,
+          }}
+        />
+      </Box>
       <Box mt="20px">
         {/* Filter buttons */}
         <Button
@@ -128,11 +178,10 @@ const Feedbacks = () => {
         >
           Feedback Robot
         </Button>
-
         {/* Add more buttons for other categories */}
       </Box>
       {/* Check if filteredData exists before mapping */}
-      {filteredData && filteredData.length > 0 || !isLoading ? (
+      {filteredData.length > 0 || !isLoading ? (
         <Box
           mt="20px"
           display="grid"

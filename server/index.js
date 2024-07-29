@@ -24,6 +24,8 @@ import {
 import { Race_Daily, Race_Min, Race_Week } from "./models/Race.js";
 import { Luggage_Daily, Luggage_Min, Luggage_Week } from "./models/Luggage.js";
 import Visitor from "./models/Visitor.js";
+import ClickStream from "./models/ClickStream.js";
+import { dataClickStream } from "./data/dataDummy.js";
 
 dotenv.config();
 const app = express();
@@ -868,6 +870,7 @@ mongoose
     // await RaceDaily.insertMany(dataDaily);
     // await RaceMinute.insertMany(dataMinute);
     // await RaceWeek.insertMany(dataWeekly);
+    // ClickStream.insertMany(dataClickStream);
 
     // Verifikasi data dalam koleksi
     const dataRaceDaily = await Race_Daily.find({});

@@ -1,18 +1,49 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Box,
   CircularProgress,
   Typography,
   useTheme,
   Grid,
+  Paper,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import { ResponsiveBar } from '@nivo/bar';
-import { useStateContextRace } from 'state/StateContextRace'; // Assumes you have a context for race data
+import { useStateContextRace } from 'state/StateContextRace';
+
+const Card = ({ title, value, theme }) => (
+  <Paper
+    sx={{
+      width: 250,
+      height: 100,
+      p: 2,
+      borderRadius: 2,
+      backgroundColor: theme.palette.background.alt,
+      boxShadow: "0 0 10px 0 rgba(0,0,0,0.5)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      m: 1,
+      color: theme.palette.getContrastText(theme.palette.background.alt),
+    }}
+  >
+    <Box>
+      <Typography variant="subtitle2">{title}</Typography>
+      <Typography variant="h5" fontWeight="bold">
+        {value}
+      </Typography>
+    </Box>
+  </Paper>
+);
 
 const SummaryRace = () => {
   const theme = useTheme();
   const { state, dispatch } = useStateContextRace();
   const { raceData, isLoading, error } = state;
+  const [selectedMetric, setSelectedMetric] = useState("average");
 
   useEffect(() => {
     const socketRace = new WebSocket('ws://localhost:5001/racedailies');
@@ -76,6 +107,7 @@ const SummaryRace = () => {
   const totalSouthEastAsian = raceData.reduce((sum, item) => sum + item.totalSouthEastAsian, 0);
   const totalKaukasia = raceData.reduce((sum, item) => sum + item.totalKaukasia, 0);
   const totalDays = raceData.length;
+  
   const avgNegroid = totalDays > 0 ? (totalNegroid / totalDays).toFixed(2) : 0;
   const avgEastAsian = totalDays > 0 ? (totalEastAsian / totalDays).toFixed(2) : 0;
   const avgIndian = totalDays > 0 ? (totalIndian / totalDays).toFixed(2) : 0;
@@ -84,230 +116,211 @@ const SummaryRace = () => {
   const avgSouthEastAsian = totalDays > 0 ? (totalSouthEastAsian / totalDays).toFixed(2) : 0;
   const avgKaukasia = totalDays > 0 ? (totalKaukasia / totalDays).toFixed(2) : 0;
 
+  const latestDay = raceData[raceData.length - 1] || {};
+  const latestNegroid = latestDay.totalNegroid || 0;
+  const latestEastAsian = latestDay.totalEastAsian || 0;
+  const latestIndian = latestDay.totalIndian || 0;
+  const latestLatin = latestDay.totalLatin || 0;
+  const latestMiddleEastern = latestDay.totalMiddleEastern || 0;
+  const latestSouthEastAsian = latestDay.totalSouthEastAsian || 0;
+  const latestKaukasia = latestDay.totalKaukasia || 0;
+
+  const renderMetrics = () => {
+    switch (selectedMetric) {
+      case "average":
+        return (
+          <>
+            <Card title="Average Negroid" value={avgNegroid} theme={theme} />
+            <Card title="Average East Asian" value={avgEastAsian} theme={theme} />
+            <Card title="Average Indian" value={avgIndian} theme={theme} />
+            <Card title="Average Latin" value={avgLatin} theme={theme} />
+            <Card title="Average Middle Eastern" value={avgMiddleEastern} theme={theme} />
+            <Card title="Average South East Asian" value={avgSouthEastAsian} theme={theme} />
+            <Card title="Average Kaukasia" value={avgKaukasia} theme={theme} />
+          </>
+        );
+      case "latest":
+        return (
+          <>
+            <Card title="Latest Negroid" value={latestNegroid} theme={theme} />
+            <Card title="Latest East Asian" value={latestEastAsian} theme={theme} />
+            <Card title="Latest Indian" value={latestIndian} theme={theme} />
+            <Card title="Latest Latin" value={latestLatin} theme={theme} />
+            <Card title="Latest Middle Eastern" value={latestMiddleEastern} theme={theme} />
+            <Card title="Latest South East Asian" value={latestSouthEastAsian} theme={theme} />
+            <Card title="Latest Kaukasia" value={latestKaukasia} theme={theme} />
+          </>
+        );
+      case "total":
+        return (
+          <>
+            <Card title="Total Negroid" value={totalNegroid} theme={theme} />
+            <Card title="Total East Asian" value={totalEastAsian} theme={theme} />
+            <Card title="Total Indian" value={totalIndian} theme={theme} />
+            <Card title="Total Latin" value={totalLatin} theme={theme} />
+            <Card title="Total Middle Eastern" value={totalMiddleEastern} theme={theme} />
+            <Card title="Total South East Asian" value={totalSouthEastAsian} theme={theme} />
+            <Card title="Total Kaukasia" value={totalKaukasia} theme={theme} />
+          </>
+        );
+      default:
+        return null;
+    }
+  };
+
   if (isLoading) return <CircularProgress />;
   if (error) return <Typography color="error">{error}</Typography>;
 
   return (
-    <Box>
-      <Typography variant="h6" align="center" gutterBottom>
-        Summary Race
-      </Typography>
-      <Grid container spacing={2}>
-        <Grid item xs={12} sm={6}>
-          <Box
-            bgcolor={theme.palette.primary.main}
-            color={theme.palette.primary.contrastText}
-            p={2}
-            borderRadius={2}
-            textAlign="center"
+    <Grid container spacing={4}>
+      <Grid item xs={12} display="flex" justifyContent="left">
+        <FormControl variant="outlined" sx={{ minWidth: 120 }}>
+          <InputLabel>Metric</InputLabel>
+          <Select
+            value={selectedMetric}
+            onChange={(e) => setSelectedMetric(e.target.value)}
+            label="Metric"
           >
-            <Typography variant="subtitle1">Rata-rata Ras/Hari</Typography>
-            <Grid container spacing={1} justifyContent="center">
-              <Grid item xs={6}>
-                <Typography variant="body1">Negroid: {avgNegroid}</Typography>
-                <Typography variant="body1">East Asian: {avgEastAsian}</Typography>
-                <Typography variant="body1">Indian: {avgIndian}</Typography>
-              </Grid>
-              <Grid item xs={6}>
-                <Typography variant="body1">Latin: {avgLatin}</Typography>
-                <Typography variant="body1">Middle Eastern: {avgMiddleEastern}</Typography>
-                <Typography variant="body1">South East Asian: {avgSouthEastAsian}</Typography>
-                <Typography variant="body1">Kaukasia: {avgKaukasia}</Typography>
-              </Grid>
-            </Grid>
-          </Box>
+            <MenuItem value="average">Average</MenuItem>
+            <MenuItem value="latest">Latest</MenuItem>
+            <MenuItem value="total">Total</MenuItem>
+          </Select>
+        </FormControl>
+      </Grid>
+      <Grid item xs={12}>
+        <Typography variant="h4" align="center" gutterBottom>
+          Summary Race
+        </Typography>
+      </Grid>
+      <Grid item xs={12}>
+        <Grid container justifyContent="center">
+          {renderMetrics()}
         </Grid>
-        <Grid item xs={12} sm={6}>
-          <Box
-            bgcolor={theme.palette.primary.main}
-            color={theme.palette.primary.contrastText}
-            p={2}
-            borderRadius={2}
-            textAlign="center"
-          >
-            <Typography variant="subtitle1">Ras/Hari (Terbaru)</Typography>
-            {raceData.length > 0 ? (
-              <Grid container spacing={1} justifyContent="center">
-                <Grid item xs={6}>
-                  <Typography variant="body1">
-                    Negroid: {raceData[raceData.length - 1].totalNegroid}
-                  </Typography>
-                  <Typography variant="body1">
-                    East Asian: {raceData[raceData.length - 1].totalEastAsian}
-                  </Typography>
-                  <Typography variant="body1">
-                    Indian: {raceData[raceData.length - 1].totalIndian}
-                  </Typography>
-                </Grid>
-                <Grid item xs={6}>
-                  <Typography variant="body1">
-                    Latin: {raceData[raceData.length - 1].totalLatin}
-                  </Typography>
-                  <Typography variant="body1">
-                    Middle Eastern: {raceData[raceData.length - 1].totalMiddleEastern}
-                  </Typography>
-                  <Typography variant="body1">
-                    South East Asian: {raceData[raceData.length - 1].totalSouthEastAsian}
-                  </Typography>
-                  <Typography variant="body1">
-                    Kaukasia: {raceData[raceData.length - 1].totalKaukasia}
-                  </Typography>
-                </Grid>
-              </Grid>
-            ) : (
-              <Typography variant="body1">No data available</Typography>
-            )}
-          </Box>
-        </Grid>
-        <Grid item xs={12}>
-          <Box
-            bgcolor={theme.palette.primary.main}
-            color={theme.palette.primary.contrastText}
-            p={2}
-            borderRadius={2}
-            textAlign="center"
-          >
-            <Typography variant="subtitle1">Total Ras (Per Minggu)</Typography>
-            <Grid container spacing={1} justifyContent="center">
-              <Grid item xs={6}>
-                <Typography variant="body1">Negroid: {totalNegroid}</Typography>
-                <Typography variant="body1">East Asian: {totalEastAsian}</Typography>
-                <Typography variant="body1">Indian: {totalIndian}</Typography>
-              </Grid>
-              <Grid item xs={6}>
-                <Typography variant="body1">Latin: {totalLatin}</Typography>
-                <Typography variant="body1">Middle Eastern: {totalMiddleEastern}</Typography>
-                <Typography variant="body1">South East Asian: {totalSouthEastAsian}</Typography>
-                <Typography variant="body1">Kaukasia: {totalKaukasia}</Typography>
-              </Grid>
-            </Grid>
-          </Box>
-        </Grid>
-        <Grid item xs={12}>
-          <Typography variant="h6" align="center" gutterBottom>
-            Chart Ras Mingguan
-          </Typography>
-          <Box
-            height={300}
-            border="1px solid #ccc"
-            borderRadius="4px"
-            boxShadow={2}
-          >
-            <ResponsiveBar
-              data={processDataForBarChart()}
-              keys={['Negroid', 'East_Asian', 'Indian', 'Latin', 'Middle_Eastern', 'South_East_Asian', 'Kaukasia']}
-              indexBy="_id"
-              margin={{ top: 50, right: 150, bottom: 50, left: 60 }}
-              padding={0.3}
-              colors={{ scheme: 'nivo' }}
-              theme={{
-                axis: {
-                  domain: {
-                    line: {
-                      stroke: theme.palette.secondary[200],
-                    },
-                  },
-                  legend: {
-                    text: {
-                      fill: theme.palette.secondary[200],
-                    },
-                  },
-                  ticks: {
-                    line: {
-                      stroke: theme.palette.secondary[200],
-                      strokeWidth: 1,
-                    },
-                    text: {
-                      fill: theme.palette.secondary[200],
-                    },
+      </Grid>
+      <Grid item xs={12}>
+        <Box sx={{ height: 400 }}>
+          <ResponsiveBar
+            data={processDataForBarChart()}
+            keys={[
+              "Negroid",
+              "East_Asian",
+              "Indian",
+              "Latin",
+              "Middle_Eastern",
+              "South_East_Asian",
+              "Kaukasia",
+            ]}
+            indexBy="_id"
+            margin={{ top: 50, right: 130, bottom: 50, left: 60 }}
+            padding={0.3}
+            colors={{ scheme: "nivo" }}
+            theme={{
+              axis: {
+                domain: {
+                  line: {
+                    stroke: theme.palette.secondary[200],
                   },
                 },
-                legends: {
+                legend: {
                   text: {
                     fill: theme.palette.secondary[200],
                   },
                 },
-                tooltip: {
-                  container: {
-                    background: theme.palette.primary.main,
-                    color: theme.palette.primary.contrastText,
+                ticks: {
+                  line: {
+                    stroke: theme.palette.secondary[200],
+                    strokeWidth: 1,
+                  },
+                  text: {
+                    fill: theme.palette.secondary[200],
                   },
                 },
-              }}
-              borderColor={{
-                from: 'color',
-                modifiers: [['darker', 1.6]],
-              }}
-              axisTop={null}
-              axisRight={null}
-              axisBottom={{
-                tickSize: 5,
-                tickPadding: 5,
-                tickRotation: 0,
-                legend: 'Day',
-                legendPosition: 'middle',
-                legendOffset: 32,
-              }}
-              axisLeft={{
-                tickSize: 5,
-                tickPadding: 5,
-                tickRotation: 0,
-                legend: 'Number of Visitor',
-                legendPosition: 'middle',
-                legendOffset: -40,
-              }}
-              labelSkipWidth={12}
-              labelSkipHeight={12}
-              labelTextColor={{ from: 'color', modifiers: [['darker', 1.6]] }}
-              animate={true}
-              motionStiffness={90}
-              motionDamping={15}
-              tooltip={(tooltip) => (
-                <div
-                  style={{
-                    background: theme.palette.background.alt,
-                    padding: "6px 9px",
-                    borderRadius: "4px",
-                    boxShadow: `0px 2px 10px ${theme.palette.secondary[200]}`,
-                  }}
-                >
-                  <Typography
-                    variant="caption"
-                    style={{ color: theme.palette.text.primary }}
-                  >
-                    {`${tooltip.id}: ${tooltip.value}`}
-                  </Typography>
-                </div>
-              )}
-              legends={[
-                {
-                  dataFrom: 'keys',
-                  anchor: 'top-right',
-                  direction: 'column',
-                  justify: false,
-                  translateX: 120,
-                  translateY: 0,
-                  itemsSpacing: 2,
-                  itemWidth: 100,
-                  itemHeight: 20,
-                  itemDirection: 'left-to-right',
-                  itemTextColor: theme.palette.secondary[200],
-                  symbolSize: 20,
-                  effects: [
-                    {
-                      on: 'hover',
-                      style: {
-                        itemTextColor: theme.palette.secondary[400],
-                      },
-                    },
-                  ],
+              },
+              legends: {
+                text: {
+                  fill: theme.palette.secondary[200],
                 },
-              ]}
-            />
-          </Box>
-        </Grid>
+              },
+              tooltip: {
+                container: {
+                  background: theme.palette.primary.main,
+                  color: theme.palette.primary.contrastText,
+                },
+              },
+            }}
+            borderColor={{
+              from: "color",
+              modifiers: [["darker", 1.6]],
+            }}
+            axisTop={null}
+            axisRight={null}
+            axisBottom={{
+              tickSize: 5,
+              tickPadding: 5,
+              tickRotation: 0,
+              legend: "Day",
+              legendPosition: "middle",
+              legendOffset: 32,
+            }}
+            axisLeft={{
+              tickSize: 5,
+              tickPadding: 5,
+              tickRotation: 0,
+              legend: "Number of Visitors",
+              legendPosition: "middle",
+              legendOffset: -40,
+            }}
+            labelSkipWidth={12}
+            labelSkipHeight={12}
+            labelTextColor={{ from: "color", modifiers: [["darker", 1.6]] }}
+            animate={true}
+            motionStiffness={90}
+            motionDamping={15}
+            tooltip={(tooltip) => (
+              <div
+                style={{
+                  background: theme.palette.background.alt,
+                  padding: "6px 9px",
+                  borderRadius: "4px",
+                  boxShadow: `0px 2px 10px ${theme.palette.secondary[200]}`,
+                }}
+              >
+                <Typography
+                  variant="caption"
+                  style={{ color: theme.palette.text.primary }}
+                >
+                  {`${tooltip.id}: ${tooltip.value}`}
+                </Typography>
+              </div>
+            )}
+            legends={[
+              {
+                dataFrom: "keys",
+                anchor: "top-right",
+                direction: "column",
+                justify: false,
+                translateX: 120,
+                translateY: 0,
+                itemsSpacing: 2,
+                itemWidth: 100,
+                itemHeight: 20,
+                itemDirection: "left-to-right",
+                itemTextColor: theme.palette.secondary[200],
+                symbolSize: 20,
+                effects: [
+                  {
+                    on: "hover",
+                    style: {
+                      itemTextColor: theme.palette.secondary[400],
+                    },
+                  },
+                ],
+              },
+            ]}
+          />
+        </Box>
       </Grid>
-    </Box>
+    </Grid>
   );
 };
 

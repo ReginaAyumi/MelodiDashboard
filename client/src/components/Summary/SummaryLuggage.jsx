@@ -1,18 +1,52 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   CircularProgress,
   Typography,
-  useTheme,
   Grid,
+  Paper,
+  useTheme,
+  useMediaQuery,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
 } from "@mui/material";
 import { ResponsiveBar } from "@nivo/bar";
 import { useStateContextLuggage } from "state/StateContextLuggage"; // Assumes you have a context for luggage data
+
+const Card = ({ title, value, theme }) => (
+  <Paper
+    sx={{
+      width: 250,
+      height: 100,
+      p: 2,
+      borderRadius: 2,
+      backgroundColor: theme.palette.background.alt,
+      boxShadow: "0 0 10px 0 rgba(0,0,0,0.5)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      m: 1,
+      color: theme.palette.getContrastText(theme.palette.background.alt),
+    }}
+  >
+    <Box>
+      <Typography variant="subtitle2">{title}</Typography>
+      <Typography variant="h5" fontWeight="bold">
+        {value}
+      </Typography>
+    </Box>
+  </Paper>
+);
 
 const SummaryLuggage = () => {
   const theme = useTheme();
   const { state, dispatch } = useStateContextLuggage();
   const { luggageData, isLoading, error } = state;
+
+  const [selectedMetric, setSelectedMetric] = useState("average");
+  const [isExpanded, setIsExpanded] = useState(false);
 
   useEffect(() => {
     const socketLuggage = new WebSocket("ws://localhost:5001/luggagedailies");
@@ -55,8 +89,8 @@ const SummaryLuggage = () => {
 
   const processDataForBarChart = () => {
     const sortedData = [...luggageData].sort((a, b) => {
-      const dateA = new Date(a._id.split('/').reverse().join('-'));
-      const dateB = new Date(b._id.split('/').reverse().join('-'));
+      const dateA = new Date(a._id.split("/").reverse().join("-"));
+      const dateB = new Date(b._id.split("/").reverse().join("-"));
       return dateA - dateB;
     });
 
@@ -87,222 +121,197 @@ const SummaryLuggage = () => {
     0
   );
   const totalDays = luggageData.length;
+
   const avgManusia = totalDays > 0 ? (totalManusia / totalDays).toFixed(2) : 0;
   const avgBesar = totalDays > 0 ? (totalBesar / totalDays).toFixed(2) : 0;
   const avgSedang = totalDays > 0 ? (totalSedang / totalDays).toFixed(2) : 0;
   const avgKecil = totalDays > 0 ? (totalKecil / totalDays).toFixed(2) : 0;
 
+  const latestDay = luggageData[luggageData.length - 1] || {};
+  const latestManusia = latestDay.totalManusia || 0;
+  const latestBesar = latestDay.totalBesar || 0;
+  const latestSedang = latestDay.totalSedang || 0;
+  const latestKecil = latestDay.totalKecil || 0;
+
+  const renderMetrics = () => {
+    switch (selectedMetric) {
+      case "average":
+        return (
+          <>
+            <Card title="Average Manusia" value={avgManusia} theme={theme} />
+            <Card title="Average Besar" value={avgBesar} theme={theme} />
+            <Card title="Average Sedang" value={avgSedang} theme={theme} />
+            <Card title="Average Kecil" value={avgKecil} theme={theme} />
+          </>
+        );
+      case "latest":
+        return (
+          <>
+            <Card title="Latest Manusia" value={latestManusia} theme={theme} />
+            <Card title="Latest Besar" value={latestBesar} theme={theme} />
+            <Card title="Latest Sedang" value={latestSedang} theme={theme} />
+            <Card title="Latest Kecil" value={latestKecil} theme={theme} />
+          </>
+        );
+      case "total":
+        return (
+          <>
+            <Card title="Total Manusia" value={totalManusia} theme={theme} />
+            <Card title="Total Besar" value={totalBesar} theme={theme} />
+            <Card title="Total Sedang" value={totalSedang} theme={theme} />
+            <Card title="Total Kecil" value={totalKecil} theme={theme} />
+          </>
+        );
+      default:
+        return null;
+    }
+  };
+
   if (isLoading) return <CircularProgress />;
   if (error) return <Typography color="error">{error}</Typography>;
 
   return (
-    <Box>
-      <Typography variant="h6" align="center" gutterBottom>
-        Summary Luggage
-      </Typography>
-      <Grid container spacing={2}>
-        <Grid item xs={12} sm={6}>
-          <Box
-            bgcolor={theme.palette.primary.main}
-            color={theme.palette.primary.contrastText}
-            p={2}
-            borderRadius={2}
-            textAlign="center"
+    <Grid container spacing={4}>
+      <Grid item xs={12} display="flex" justifyContent="left">
+        <FormControl variant="outlined" sx={{ minWidth: 120 }}>
+          <InputLabel>Metric</InputLabel>
+          <Select
+            value={selectedMetric}
+            onChange={(e) => setSelectedMetric(e.target.value)}
+            label="Metric"
           >
-            <Typography variant="subtitle1">Rata-rata Bawaan/Hari</Typography>
-            <Grid container spacing={1} justifyContent="center">
-              <Grid item xs={6}>
-                <Typography variant="body1">Manusia: {avgManusia}</Typography>
-                <Typography variant="body1">Besar: {avgBesar}</Typography>
-              </Grid>
-              <Grid item xs={6}>
-                <Typography variant="body1">Sedang: {avgSedang}</Typography>
-                <Typography variant="body1">Kecil: {avgKecil}</Typography>
-              </Grid>
-            </Grid>
-          </Box>
+            <MenuItem value="average">Average</MenuItem>
+            <MenuItem value="latest">Latest</MenuItem>
+            <MenuItem value="total">Total</MenuItem>
+          </Select>
+        </FormControl>
+      </Grid>
+      <Grid item xs={12}>
+        <Typography variant="h4" align="center" gutterBottom>
+          Summary Race
+        </Typography>
+      </Grid>
+      <Grid item xs={12}>
+        <Grid container justifyContent="center">
+          {renderMetrics()}
         </Grid>
-        <Grid item xs={12} sm={6}>
-          <Box
-            bgcolor={theme.palette.primary.main}
-            color={theme.palette.primary.contrastText}
-            p={2}
-            borderRadius={2}
-            textAlign="center"
-          >
-            <Typography variant="subtitle1">Bawaan/Hari (Terbaru)</Typography>
-            {luggageData.length > 0 ? (
-              <Grid container spacing={1} justifyContent="center">
-                <Grid item xs={6}>
-                  <Typography variant="body1">
-                    Manusia: {luggageData[luggageData.length - 1].totalManusia}
-                  </Typography>
-                  <Typography variant="body1">
-                    Besar: {luggageData[luggageData.length - 1].totalBesar}
-                  </Typography>
-                </Grid>
-                <Grid item xs={6}>
-                  <Typography variant="body1">
-                    Sedang: {luggageData[luggageData.length - 1].totalSedang}
-                  </Typography>
-                  <Typography variant="body1">
-                    Kecil: {luggageData[luggageData.length - 1].totalKecil}
-                  </Typography>
-                </Grid>
-              </Grid>
-            ) : (
-              <Typography variant="body1">No data available</Typography>
-            )}
-          </Box>
-        </Grid>
-        <Grid item xs={12}>
-          <Box
-            bgcolor={theme.palette.primary.main}
-            color={theme.palette.primary.contrastText}
-            p={2}
-            borderRadius={2}
-            textAlign="center"
-          >
-            <Typography variant="subtitle1">
-              Total Bawaan (Per Minggu)
-            </Typography>
-            <Grid container spacing={1} justifyContent="center">
-              <Grid item xs={6}>
-                <Typography variant="body1">Manusia: {totalManusia}</Typography>
-                <Typography variant="body1">Besar: {totalBesar}</Typography>
-              </Grid>
-              <Grid item xs={6}>
-                <Typography variant="body1">Sedang: {totalSedang}</Typography>
-                <Typography variant="body1">Kecil: {totalKecil}</Typography>
-              </Grid>
-            </Grid>
-          </Box>
-        </Grid>
-        <Grid item xs={12}>
-          <Typography variant="h6" align="center" gutterBottom>
-            Chart Bawaan Mingguan
-          </Typography>
-          <Box
-            height={300}
-            border="1px solid #ccc"
-            borderRadius="4px"
-            boxShadow={2}
-          >
-            <ResponsiveBar
-              data={processDataForBarChart()}
-              keys={["Manusia", "Besar", "Sedang", "Kecil"]}
-              indexBy="_id"
-              margin={{ top: 50, right: 130, bottom: 50, left: 60 }}
-              padding={0.3}
-              colors={{ scheme: "nivo" }}
-              theme={{
-                axis: {
-                  domain: {
-                    line: {
-                      stroke: theme.palette.secondary[200],
-                    },
-                  },
-                  legend: {
-                    text: {
-                      fill: theme.palette.secondary[200],
-                    },
-                  },
-                  ticks: {
-                    line: {
-                      stroke: theme.palette.secondary[200],
-                      strokeWidth: 1,
-                    },
-                    text: {
-                      fill: theme.palette.secondary[200],
-                    },
+      </Grid>
+      <Grid item xs={12}>
+        <Box sx={{ height: 400 }}>
+          <ResponsiveBar
+            data={processDataForBarChart()}
+            keys={["Manusia", "Besar", "Sedang", "Kecil"]}
+            indexBy="_id"
+            margin={{ top: 50, right: 130, bottom: 50, left: 60 }}
+            padding={0.3}
+            colors={{ scheme: "nivo" }}
+            theme={{
+              axis: {
+                domain: {
+                  line: {
+                    stroke: theme.palette.secondary[200],
                   },
                 },
-                legends: {
+                legend: {
                   text: {
                     fill: theme.palette.secondary[200],
                   },
                 },
-                tooltip: {
-                  container: {
-                    background: theme.palette.primary.main,
-                    color: theme.palette.primary.contrastText,
+                ticks: {
+                  line: {
+                    stroke: theme.palette.secondary[200],
+                    strokeWidth: 1,
+                  },
+                  text: {
+                    fill: theme.palette.secondary[200],
                   },
                 },
-              }}
-              borderColor={{
-                from: "color",
-                modifiers: [["darker", 1.6]],
-              }}
-              axisTop={null}
-              axisRight={null}
-              axisBottom={{
-                tickSize: 5,
-                tickPadding: 5,
-                tickRotation: 0,
-                legend: "Day",
-                legendPosition: "middle",
-                legendOffset: 32,
-              }}
-              axisLeft={{
-                tickSize: 5,
-                tickPadding: 5,
-                tickRotation: 0,
-                legend: "Number of Visitor",
-                legendPosition: "middle",
-                legendOffset: -40,
-              }}
-              labelSkipWidth={12}
-              labelSkipHeight={12}
-              labelTextColor={{ from: "color", modifiers: [["darker", 1.6]] }}
-              animate={true}
-              motionStiffness={90}
-              motionDamping={15}
-              tooltip={(tooltip) => (
-                <div
-                  style={{
-                    background: theme.palette.background.alt,
-                    padding: "6px 9px",
-                    borderRadius: "4px",
-                    boxShadow: `0px 2px 10px ${theme.palette.secondary[200]}`,
-                  }}
-                >
-                  <Typography
-                    variant="caption"
-                    style={{ color: theme.palette.text.primary }}
-                  >
-                    {`${tooltip.id}: ${tooltip.value}`}
-                  </Typography>
-                </div>
-              )}
-              legends={[
-                {
-                  dataFrom: "keys",
-                  anchor: "top-right",
-                  direction: "column",
-                  justify: false,
-                  translateX: 120,
-                  translateY: 0,
-                  itemsSpacing: 2,
-                  itemWidth: 100,
-                  itemHeight: 20,
-                  itemDirection: "left-to-right",
-                  itemOpacity: 1,
-                  symbolSize: 20,
-                  effects: [
-                    {
-                      on: "hover",
-                      style: {
-                        itemOpacity: 1,
-                      },
-                    },
-                  ],
+              },
+              legends: {
+                text: {
+                  fill: theme.palette.secondary[200],
                 },
-              ]}
-            />
-          </Box>
-        </Grid>
+              },
+              tooltip: {
+                container: {
+                  background: theme.palette.primary.main,
+                  color: theme.palette.primary.contrastText,
+                },
+              },
+            }}
+            borderColor={{
+              from: "color",
+              modifiers: [["darker", 1.6]],
+            }}
+            axisTop={null}
+            axisRight={null}
+            axisBottom={{
+              tickSize: 5,
+              tickPadding: 5,
+              tickRotation: 0,
+              legend: "Day",
+              legendPosition: "middle",
+              legendOffset: 32,
+            }}
+            axisLeft={{
+              tickSize: 5,
+              tickPadding: 5,
+              tickRotation: 0,
+              legend: "Number of Visitors",
+              legendPosition: "middle",
+              legendOffset: -40,
+            }}
+            labelSkipWidth={12}
+            labelSkipHeight={12}
+            labelTextColor={{ from: "color", modifiers: [["darker", 1.6]] }}
+            animate={true}
+            motionStiffness={90}
+            motionDamping={15}
+            tooltip={(tooltip) => (
+              <div
+                style={{
+                  background: theme.palette.background.alt,
+                  padding: "6px 9px",
+                  borderRadius: "4px",
+                  boxShadow: `0px 2px 10px ${theme.palette.secondary[200]}`,
+                }}
+              >
+                <Typography
+                  variant="caption"
+                  style={{ color: theme.palette.text.primary }}
+                >
+                  {`${tooltip.id}: ${tooltip.value}`}
+                </Typography>
+              </div>
+            )}
+            legends={[
+              {
+                dataFrom: "keys",
+                anchor: "top-right",
+                direction: "column",
+                justify: false,
+                translateX: 120,
+                translateY: 0,
+                itemsSpacing: 2,
+                itemWidth: 100,
+                itemHeight: 20,
+                itemDirection: "left-to-right",
+                itemTextColor: theme.palette.secondary[200],
+                symbolSize: 20,
+                effects: [
+                  {
+                    on: "hover",
+                    style: {
+                      itemTextColor: theme.palette.secondary[400],
+                    },
+                  },
+                ],
+              },
+            ]}
+          />
+        </Box>
       </Grid>
-    </Box>
+    </Grid>
   );
 };
 
