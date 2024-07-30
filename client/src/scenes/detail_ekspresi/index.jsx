@@ -300,7 +300,7 @@ const DetailEkspresi = ({ isSidebarOpen }) => {
                 "Terkejut",
               ]}
               indexBy="_id"
-              margin={{ top: 50, right: 150, bottom: 50, left: 60 }}
+              margin={{ top: 30, right: 150, bottom: 70, left: 60 }}
               padding={0.3}
               colors={{ scheme: "nivo" }}
               theme={{
@@ -341,10 +341,10 @@ const DetailEkspresi = ({ isSidebarOpen }) => {
               axisBottom={{
                 tickSize: 5,
                 tickPadding: 5,
-                tickRotation: 0,
+                tickRotation: 20,
                 legend: `${timeFrame}`,
                 legendPosition: "middle",
-                legendOffset: 32,
+                legendOffset: 52,
               }}
               axisLeft={{
                 tickSize: 5,
