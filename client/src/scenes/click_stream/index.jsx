@@ -18,9 +18,9 @@ import {
 import { useGetClickStreamQuery } from "state/api";
 import Header from "components/Header";
 
-const ClickStream = ({ visitorId, clicks }) => {
+const ClickStream = () => {
   const theme = useTheme();
-  const { data, isLoading } = useGetClickStreamQuery();
+  const { data, isLoading, refetch } = useGetClickStreamQuery();
   const [clickStreamData, setClickStreamData] = useState([]);
   const [startDate, setStartDate] = useState(""); // State untuk start date
   const [endDate, setEndDate] = useState(""); // State untuk end date
@@ -53,6 +53,14 @@ const ClickStream = ({ visitorId, clicks }) => {
     }
   }, [data]);
 
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      refetch();
+    }, 60000); // 10 seconds
+
+    return () => clearInterval(intervalId); // Clean up interval on component unmount
+  }, [refetch]);
+
   // Function to handle manual date filtering
   const handleFilterByDate = () => {
     // Perform filtering based on startDate and endDate
@@ -71,7 +79,7 @@ const ClickStream = ({ visitorId, clicks }) => {
         subtitle="Melihat jejak klik pengunjung di berbagai fitur."
       />
       {/* Filter Tanggal Manual */}
-      <Box mt="20px" display="flex" alignItems="center">
+      {/* <Box mt="20px" display="flex" alignItems="center">
         <TextField
           label="Start Date"
           type="date"
@@ -95,7 +103,7 @@ const ClickStream = ({ visitorId, clicks }) => {
         <Button variant="contained" onClick={handleFilterByDate}>
           Filter
         </Button>
-      </Box>
+      </Box> */}
 
       {/* Render Click Stream Data */}
       <Box mt="20px">

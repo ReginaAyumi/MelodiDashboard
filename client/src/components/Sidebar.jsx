@@ -213,7 +213,7 @@ const Sidebar = ({
           <Box mb="1rem">
             <Divider />
             <FlexBetween textTransform="none" gap="1rem" m="2rem 2rem 0 2rem">
-              <Avatar sx={{ bgcolor: deepPurple[500] }}>
+              <Avatar sx={{ bgcolor: theme.palette.secondary[200] }}>
                 {admin.name && getInitials(admin.name)}
               </Avatar>
               <Box textAlign="left">

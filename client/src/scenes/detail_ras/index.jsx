@@ -331,7 +331,7 @@ const DetailRas = ({ isSidebarOpen }) => {
                 "Kaukasia",
               ]}
               indexBy="_id"
-              margin={{ top: 50, right: 150, bottom: 50, left: 60 }}
+              margin={{ top: 30, right: 150, bottom: 70, left: 60 }}
               padding={0.3}
               colors={{ scheme: "nivo" }}
               theme={{
@@ -372,10 +372,10 @@ const DetailRas = ({ isSidebarOpen }) => {
               axisBottom={{
                 tickSize: 5,
                 tickPadding: 5,
-                tickRotation: 0,
+                tickRotation: 20,
                 legend: `${timeFrame}`,
                 legendPosition: "middle",
-                legendOffset: 32,
+                legendOffset: 52,
               }}
               axisLeft={{
                 tickSize: 5,
@@ -449,7 +449,7 @@ const DetailRas = ({ isSidebarOpen }) => {
           >
             <ResponsiveLine
               data={processDataForLineChart()}
-              margin={{ top: 50, right: 110, bottom: 50, left: 60 }}
+              margin={{ top: 50, right: 150, bottom: 50, left: 60 }}
               xScale={{ type: "point" }}
               yScale={{
                 type: "linear",

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
   Box,
   CircularProgress,
@@ -12,32 +12,44 @@ import {
   FormControl,
   InputLabel,
 } from "@mui/material";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faWalking,
+  faBriefcase,
+  faSuitcase,
+  faBoxes
+} from "@fortawesome/free-solid-svg-icons";
 import { ResponsiveBar } from "@nivo/bar";
 import { useStateContextLuggage } from "state/StateContextLuggage"; // Assumes you have a context for luggage data
 
-const Card = ({ title, value, theme }) => (
+const Card = ({ title, value, icon: IconComponent, theme }) => (
   <Paper
-    sx={{
-      width: 250,
-      height: 100,
-      p: 2,
-      borderRadius: 2,
-      backgroundColor: theme.palette.background.alt,
-      boxShadow: "0 0 10px 0 rgba(0,0,0,0.5)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      m: 1,
-      color: theme.palette.getContrastText(theme.palette.background.alt),
-    }}
-  >
-    <Box>
-      <Typography variant="subtitle2">{title}</Typography>
-      <Typography variant="h5" fontWeight="bold">
-        {value}
-      </Typography>
+  sx={{
+    width: 250,
+    height: 100,
+    p: 2,
+    borderRadius: 2,
+    backgroundColor: theme.palette.background.alt,
+    boxShadow: "0 0 10px 0 rgba(0,0,0,0.5)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    m: 1,
+    color: theme.palette.getContrastText(theme.palette.background.alt),
+  }}
+>
+  {IconComponent && (
+    <Box sx={{ marginRight: 2, color: theme.palette.secondary[200] }}>
+      <FontAwesomeIcon icon={IconComponent} size="3x" />
     </Box>
-  </Paper>
+  )}
+  <Box>
+    <Typography variant="subtitle2">{title}</Typography>
+    <Typography variant="h5" fontWeight="bold">
+      {value}
+    </Typography>
+  </Box>
+</Paper>
 );
 
 const SummaryLuggage = () => {
@@ -104,6 +116,14 @@ const SummaryLuggage = () => {
     }));
   };
 
+  const sortedData = useMemo(() => {
+    return [...luggageData].sort((a, b) => {
+      const dateA = new Date(a._id.split("/").reverse().join("-"));
+      const dateB = new Date(b._id.split("/").reverse().join("-"));
+      return dateA - dateB;
+    });
+  }, [luggageData]);
+
   const totalManusia = luggageData.reduce(
     (sum, item) => sum + item.totalManusia,
     0
@@ -127,7 +147,7 @@ const SummaryLuggage = () => {
   const avgSedang = totalDays > 0 ? (totalSedang / totalDays).toFixed(2) : 0;
   const avgKecil = totalDays > 0 ? (totalKecil / totalDays).toFixed(2) : 0;
 
-  const latestDay = luggageData[luggageData.length - 1] || {};
+  const latestDay = sortedData[sortedData.length - 1] || {};
   const latestManusia = latestDay.totalManusia || 0;
   const latestBesar = latestDay.totalBesar || 0;
   const latestSedang = latestDay.totalSedang || 0;
@@ -138,28 +158,28 @@ const SummaryLuggage = () => {
       case "average":
         return (
           <>
-            <Card title="Average Manusia" value={avgManusia} theme={theme} />
-            <Card title="Average Besar" value={avgBesar} theme={theme} />
-            <Card title="Average Sedang" value={avgSedang} theme={theme} />
-            <Card title="Average Kecil" value={avgKecil} theme={theme} />
+            <Card title="Average Manusia" value={avgManusia} icon={faWalking} theme={theme} />
+            <Card title="Average Besar" value={avgBesar} icon={faBoxes} theme={theme} />
+            <Card title="Average Sedang" value={avgSedang} icon={faSuitcase} theme={theme} />
+            <Card title="Average Kecil" value={avgKecil} icon={faBriefcase} theme={theme} />
           </>
         );
       case "latest":
         return (
           <>
-            <Card title="Latest Manusia" value={latestManusia} theme={theme} />
-            <Card title="Latest Besar" value={latestBesar} theme={theme} />
-            <Card title="Latest Sedang" value={latestSedang} theme={theme} />
-            <Card title="Latest Kecil" value={latestKecil} theme={theme} />
+            <Card title="Latest Manusia" value={latestManusia} icon={faWalking} theme={theme} />
+            <Card title="Latest Besar" value={latestBesar} icon={faBoxes} theme={theme} />
+            <Card title="Latest Sedang" value={latestSedang} icon={faSuitcase} theme={theme} />
+            <Card title="Latest Kecil" value={latestKecil} icon={faBriefcase} theme={theme} />
           </>
         );
       case "total":
         return (
           <>
-            <Card title="Total Manusia" value={totalManusia} theme={theme} />
-            <Card title="Total Besar" value={totalBesar} theme={theme} />
-            <Card title="Total Sedang" value={totalSedang} theme={theme} />
-            <Card title="Total Kecil" value={totalKecil} theme={theme} />
+            <Card title="Total Manusia" value={totalManusia} icon={faWalking} theme={theme} />
+            <Card title="Total Besar" value={totalBesar} icon={faBoxes} theme={theme} />
+            <Card title="Total Sedang" value={totalSedang} icon={faSuitcase} theme={theme} />
+            <Card title="Total Kecil" value={totalKecil} icon={faBriefcase} theme={theme} />
           </>
         );
       default:
@@ -188,7 +208,7 @@ const SummaryLuggage = () => {
       </Grid>
       <Grid item xs={12}>
         <Typography variant="h4" align="center" gutterBottom>
-          Summary Race
+          Summary Luggage
         </Typography>
       </Grid>
       <Grid item xs={12}>

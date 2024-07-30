@@ -16,7 +16,7 @@ import Header from "components/Header";
 
 const OverallFeedback = () => {
   const theme = useTheme();
-  const { data, isLoading } = useGetFeedbacksQuery();
+  const { data, isLoading, refetch } = useGetFeedbacksQuery();
   const isNotMobile = useMediaQuery("(min-width: 1000px)");
   const [averageFeedbackByCategory, setAverageFeedbackByCategory] = useState({});
   const [startDate, setStartDate] = useState(null);
@@ -54,6 +54,14 @@ const OverallFeedback = () => {
       setAverageFeedbackByCategory(averageByCategory);
     }
   }, [data, startDate, endDate]);
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      refetch();
+    }, 60000); // 10 seconds
+
+    return () => clearInterval(intervalId); // Clean up interval on component unmount
+  }, [refetch]);
 
   return (
     <Box m="1.5rem 2.5rem">

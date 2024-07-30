@@ -6,8 +6,6 @@ import {
   LightModeOutlined,
   DarkModeOutlined,
   Menu as MenuIcon,
-  Search,
-  SettingsOutlined,
   ArrowDropDownOutlined,
 } from "@mui/icons-material";
 import Avatar from "@mui/material/Avatar";
@@ -22,7 +20,6 @@ import {
   Box,
   Typography,
   IconButton,
-  InputBase,
   Toolbar,
   Menu,
   MenuItem,
@@ -92,17 +89,6 @@ const Navbar = ({ isSidebarOpen, setIsSidebarOpen }) => {
           <IconButton onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
             <MenuIcon />
           </IconButton>
-          <FlexBetween
-            backgroundColor={theme.palette.background.alt}
-            borderRadius="9px"
-            gap="3rem"
-            p="0.1rem 1.5rem"
-          >
-            <InputBase placeholder="Search..." />
-            <IconButton>
-              <Search />
-            </IconButton>
-          </FlexBetween>
         </FlexBetween>
 
         {/* RIGHT SIDE */}
@@ -113,9 +99,6 @@ const Navbar = ({ isSidebarOpen, setIsSidebarOpen }) => {
             ) : (
               <LightModeOutlined sx={{ fontSize: "25px" }} />
             )}
-          </IconButton>
-          <IconButton>
-            <SettingsOutlined sx={{ fontSize: "25px" }} />
           </IconButton>
 
           <FlexBetween>
@@ -129,7 +112,7 @@ const Navbar = ({ isSidebarOpen, setIsSidebarOpen }) => {
                 gap: "1rem",
               }}
             >
-              <Avatar sx={{ bgcolor: deepPurple[500] }}>
+              <Avatar sx={{ bgcolor: theme.palette.secondary[200] }}>
                 {name && getInitials(name)}
               </Avatar>
               <Box textAlign="left">

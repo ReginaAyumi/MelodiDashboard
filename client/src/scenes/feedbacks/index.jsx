@@ -79,7 +79,7 @@ const Feedback = ({
 };
 
 const Feedbacks = () => {
-  const { data, isLoading } = useGetFeedbacksQuery();
+  const { data, isLoading, refetch } = useGetFeedbacksQuery();
   const isNotMobile = useMediaQuery("(min-width: 1000px)");
   const [filterCategory, setFilterCategory] = useState(null);
   const [startDate, setStartDate] = useState(null);
@@ -116,6 +116,14 @@ const Feedbacks = () => {
       setFilteredData(feedbackData);
     }
   }, [data, filterCategory, startDate, endDate]);
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      refetch(); 
+    }, 60000); 
+
+    return () => clearInterval(intervalId); // Cleanup interval on component unmount
+  }, [refetch]);
 
   return (
     <Box m="1.5rem 2.5rem">

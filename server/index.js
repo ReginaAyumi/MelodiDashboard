@@ -552,310 +552,60 @@ wss.on("connection", (ws) => {
   });
 });
 
-const dailyageChangeStream = Age_Daily.watch();
-const minuteageChangeStream = Age_Min.watch();
-const weeklyageChangeStream = Age_Week.watch();
-const dailygenderChangeStream = Gender_Daily.watch();
-const minutegenderChangeStream = Gender_Min.watch();
-const weeklygenderChangeStream = Gender_Week.watch();
-const dailyexpressionChangeStream = Expression_Daily.watch();
-const minuteexpressionChangeStream = Expression_Min.watch();
-const weeklyexpressionChangeStream = Expression_Week.watch();
-const dailyraceChangeStream = Race_Daily.watch();
-const minuteraceChangeStream = Race_Min.watch();
-const weeklyraceChangeStream = Race_Week.watch();
-const dailyluggageChangeStream = Luggage_Daily.watch();
-const minuteluggageChangeStream = Luggage_Min.watch();
-const weeklyluggageChangeStream = Luggage_Week.watch();
-// Add more change streams as needed, for example:
-// const weeklyChangeStream = Race_Weekly.watch();
-// Daily change stream
+// Helper function to setup a change stream with error handling and reconnection logic
+function setupChangeStream(model, type, fetchDataFunction, wss) {
+  const changeStream = model.watch();
 
-dailyageChangeStream.on("change", async (change) => {
-  console.log("Daily age database change detected:", change);
-
-  const agedailyData = await fetchData("agedaily");
-
-  wss.clients.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(
-        JSON.stringify({
-          type: "DATA",
-          payload: {
-            agedaily: agedailyData,
-          },
-        })
-      );
+  changeStream.on('change', async (change) => {
+    console.log(`${type} database change detected:`, change);
+    
+    try {
+      const data = await fetchDataFunction(type);
+      wss.clients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(JSON.stringify({
+            type: "DATA",
+            payload: { [type]: data },
+          }));
+        }
+      });
+    } catch (error) {
+      console.error(`Error processing ${type} change:`, error);
     }
   });
-});
 
-minuteageChangeStream.on("change", async (change) => {
-  console.log("Minute age database change detected:", change);
-
-  const ageminuteData = await fetchData("ageminute");
-
-  wss.clients.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(
-        JSON.stringify({
-          type: "DATA",
-          payload: {
-            ageminute: ageminuteData,
-          },
-        })
-      );
-    }
+  changeStream.on('error', (error) => {
+    console.error(`${type} Change Stream Error:`, error);
+    changeStream.close(); // Close the current change stream
+    // Reconnect logic with a delay
+    setTimeout(() => setupChangeStream(model, type, fetchDataFunction, wss), 1000);
   });
-});
 
-weeklyageChangeStream.on("change", async (change) => {
-  console.log("Weekly age database change detected:", change);
+  return changeStream;
+}
 
-  const ageweeklyData = await fetchData("ageweekly");
+// Define your models and corresponding data types
+const modelsAndTypes = [
+  { model: Age_Daily, type: 'agedaily' },
+  { model: Age_Min, type: 'ageminute' },
+  { model: Age_Week, type: 'ageweekly' },
+  { model: Gender_Daily, type: 'genderdaily' },
+  { model: Gender_Min, type: 'genderminute' },
+  { model: Gender_Week, type: 'genderweekly' },
+  { model: Expression_Daily, type: 'expressiondaily' },
+  { model: Expression_Min, type: 'expressionminute' },
+  { model: Expression_Week, type: 'expressionweekly' },
+  { model: Race_Daily, type: 'racedaily' },
+  { model: Race_Min, type: 'raceminute' },
+  { model: Race_Week, type: 'raceweekly' },
+  { model: Luggage_Daily, type: 'luggagedaily' },
+  { model: Luggage_Min, type: 'luggageminute' },
+  { model: Luggage_Week, type: 'luggageweekly' },
+];
 
-  wss.clients.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(
-        JSON.stringify({
-          type: "DATA",
-          payload: {
-            ageweekly: ageweeklyData,
-          },
-        })
-      );
-    }
-  });
-});
+// Setup change streams for all models
+modelsAndTypes.forEach(({ model, type }) => setupChangeStream(model, type, fetchData, wss));
 
-dailygenderChangeStream.on("change", async (change) => {
-  console.log("Daily gender database change detected:", change);
-
-  const genderdailyData = await fetchData("genderdaily");
-
-  wss.clients.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(
-        JSON.stringify({
-          type: "DATA",
-          payload: {
-            genderdaily: genderdailyData,
-          },
-        })
-      );
-    }
-  });
-});
-
-minutegenderChangeStream.on("change", async (change) => {
-  console.log("Minute gender database change detected:", change);
-
-  const genderminuteData = await fetchData("genderminute");
-
-  wss.clients.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(
-        JSON.stringify({
-          type: "DATA",
-          payload: {
-            genderminute: genderminuteData,
-          },
-        })
-      );
-    }
-  });
-});
-
-weeklygenderChangeStream.on("change", async (change) => {
-  console.log("Weekly gender database change detected:", change);
-
-  const genderweeklyData = await fetchData("genderweekly");
-
-  wss.clients.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(
-        JSON.stringify({
-          type: "DATA",
-          payload: {
-            genderweekly: genderweeklyData,
-          },
-        })
-      );
-    }
-  });
-});
-
-dailyexpressionChangeStream.on("change", async (change) => {
-  console.log("Daily expression database change detected:", change);
-
-  const expressiondailyData = await fetchData("expressiondaily");
-
-  wss.clients.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(
-        JSON.stringify({
-          type: "DATA",
-          payload: {
-            expressiondaily: expressiondailyData,
-          },
-        })
-      );
-    }
-  });
-});
-
-minuteexpressionChangeStream.on("change", async (change) => {
-  console.log("Minute expression database change detected:", change);
-
-  const expressionminuteData = await fetchData("expressionminute");
-
-  wss.clients.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(
-        JSON.stringify({
-          type: "DATA",
-          payload: {
-            expressionminute: expressionminuteData,
-          },
-        })
-      );
-    }
-  });
-});
-
-weeklyexpressionChangeStream.on("change", async (change) => {
-  console.log("Weekly expression database change detected:", change);
-
-  const expressionweeklyData = await fetchData("expressionweekly");
-
-  wss.clients.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(
-        JSON.stringify({
-          type: "DATA",
-          payload: {
-            expressionweekly: expressionweeklyData,
-          },
-        })
-      );
-    }
-  });
-});
-
-dailyraceChangeStream.on("change", async (change) => {
-  console.log("Daily race database change detected:", change);
-
-  const racedailyData = await fetchData("racedaily");
-
-  wss.clients.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(
-        JSON.stringify({
-          type: "DATA",
-          payload: {
-            racedaily: racedailyData,
-          },
-        })
-      );
-    }
-  });
-});
-
-// Minute change stream
-minuteraceChangeStream.on("change", async (change) => {
-  console.log("Minute  race database change detected:", change);
-
-  const raceminuteData = await fetchData("raceminute");
-
-  wss.clients.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(
-        JSON.stringify({
-          type: "DATA",
-          payload: {
-            raceminute: raceminuteData,
-          },
-        })
-      );
-    }
-  });
-});
-
-weeklyraceChangeStream.on("change", async (change) => {
-  console.log("Weekly race database change detected:", change);
-
-  const raceweeklyData = await fetchData("raceweekly");
-
-  wss.clients.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(
-        JSON.stringify({
-          type: "DATA",
-          payload: {
-            raceweekly: raceweeklyData,
-          },
-        })
-      );
-    }
-  });
-});
-
-dailyluggageChangeStream.on("change", async (change) => {
-  console.log("Daily luggage database change detected:", change);
-
-  const luggagedailyData = await fetchData("luggagedaily");
-
-  wss.clients.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(
-        JSON.stringify({
-          type: "DATA",
-          payload: {
-            luggagedaily: luggagedailyData,
-          },
-        })
-      );
-    }
-  });
-});
-
-minuteluggageChangeStream.on("change", async (change) => {
-  console.log("Minute luggage database change detected:", change);
-
-  const luggageminuteData = await fetchData("luggageminute");
-
-  wss.clients.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(
-        JSON.stringify({
-          type: "DATA",
-          payload: {
-            luggageminute: luggageminuteData,
-          },
-        })
-      );
-    }
-  });
-});
-
-weeklyluggageChangeStream.on("change", async (change) => {
-  console.log("Weekly luggage database change detected:", change);
-
-  const luggageweeklyData = await fetchData("luggageweekly");
-
-  wss.clients.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(
-        JSON.stringify({
-          type: "DATA",
-          payload: {
-            luggageweekly: luggageweeklyData,
-          },
-        })
-      );
-    }
-  });
-});
 
 // Mongoose setup
 mongoose

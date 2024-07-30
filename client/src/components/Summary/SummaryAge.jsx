@@ -31,6 +31,7 @@ const Card = ({ title, value, icon: Icon, theme }) => (
       boxShadow: "0 0 10px 0 rgba(0,0,0,0.5)",
       display: "flex",
       alignItems: "center",
+      justifyContent: "center",
       m: 1,
       color: theme.palette.getContrastText(theme.palette.background.alt),
     }}
@@ -217,7 +218,7 @@ const SummaryAge = () => {
               theme={theme}
             />
             <Card
-              title="Total Lansia (Per Week)"
+              title="Total Lansia"
               value={totalLansia}
               icon={ElderlyIcon}
               theme={theme}
@@ -230,7 +231,7 @@ const SummaryAge = () => {
   };
 
   return (
-    <Grid container spacing={isSmallScreen ? 2 : 4}>
+    <Grid container spacing={4}>
       <Grid item xs={12} display="flex" justifyContent="left">
         <FormControl variant="outlined" sx={{ minWidth: 120 }}>
           <InputLabel>Metric</InputLabel>
@@ -256,7 +257,7 @@ const SummaryAge = () => {
         </Button>
       </Grid> */}
       <Grid item xs={12}>
-        <Grid container justifyContent="left">
+        <Grid container justifyContent="center">
           {renderMetrics()}
           {isExpanded && (
             <>

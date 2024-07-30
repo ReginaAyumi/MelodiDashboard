@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   Box,
   CircularProgress,
@@ -11,33 +11,47 @@ import {
   Select,
   MenuItem,
 } from '@mui/material';
+import Avatar from '@mui/material/Avatar';
 import { ResponsiveBar } from '@nivo/bar';
 import { useStateContextRace } from 'state/StateContextRace';
 
-const Card = ({ title, value, theme }) => (
-  <Paper
-    sx={{
-      width: 250,
-      height: 100,
-      p: 2,
-      borderRadius: 2,
-      backgroundColor: theme.palette.background.alt,
-      boxShadow: "0 0 10px 0 rgba(0,0,0,0.5)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      m: 1,
-      color: theme.palette.getContrastText(theme.palette.background.alt),
-    }}
-  >
-    <Box>
-      <Typography variant="subtitle2">{title}</Typography>
-      <Typography variant="h5" fontWeight="bold">
-        {value}
-      </Typography>
-    </Box>
-  </Paper>
-);
+const Card = ({ title, value, theme }) => {
+  const getInitials = (title) => {
+    return title
+      .split(' ')
+      .map(word => word[0])
+      .join('');
+  };
+
+  return (
+    <Paper
+      sx={{
+        width: 250,
+        height: 100,
+        p: 2,
+        borderRadius: 2,
+        backgroundColor: theme.palette.background.alt,
+        boxShadow: "0 0 10px 0 rgba(0,0,0,0.5)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: "10px",
+        m: 1,
+        color: theme.palette.getContrastText(theme.palette.background.alt),
+      }}
+    >
+      <Avatar sx={{ bgcolor: theme.palette.secondary[200] }}>
+        {getInitials(title)}
+      </Avatar>
+      <Box sx={{ textAlign: 'middle' }}>
+        <Typography variant="subtitle2">{title}</Typography>
+        <Typography variant="h5" fontWeight="bold">
+          {value}
+        </Typography>
+      </Box>
+    </Paper>
+  );
+};
 
 const SummaryRace = () => {
   const theme = useTheme();
@@ -99,6 +113,14 @@ const SummaryRace = () => {
     }));
   };
 
+  const sortedData = useMemo(() => {
+    return [...raceData].sort((a, b) => {
+      const dateA = new Date(a._id.split("/").reverse().join("-"));
+      const dateB = new Date(b._id.split("/").reverse().join("-"));
+      return dateA - dateB;
+    });
+  }, [raceData]);
+
   const totalNegroid = raceData.reduce((sum, item) => sum + item.totalNegroid, 0);
   const totalEastAsian = raceData.reduce((sum, item) => sum + item.totalEastAsian, 0);
   const totalIndian = raceData.reduce((sum, item) => sum + item.totalIndian, 0);
@@ -116,7 +138,7 @@ const SummaryRace = () => {
   const avgSouthEastAsian = totalDays > 0 ? (totalSouthEastAsian / totalDays).toFixed(2) : 0;
   const avgKaukasia = totalDays > 0 ? (totalKaukasia / totalDays).toFixed(2) : 0;
 
-  const latestDay = raceData[raceData.length - 1] || {};
+  const latestDay = sortedData[sortedData.length - 1] || {};
   const latestNegroid = latestDay.totalNegroid || 0;
   const latestEastAsian = latestDay.totalEastAsian || 0;
   const latestIndian = latestDay.totalIndian || 0;

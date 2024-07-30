@@ -42,7 +42,7 @@ const Card = ({ title, value, icon: IconComponent, theme }) => (
   }}
 >
   {IconComponent && (
-    <Box sx={{ marginRight: 2 }}>
+    <Box sx={{ marginRight: 2, color: theme.palette.secondary[200] }}>
       <FontAwesomeIcon icon={IconComponent} size="3x" />
     </Box>
   )}
@@ -118,6 +118,14 @@ const SummaryExpression = () => {
     }));
   };
 
+  const sortedData = useMemo(() => {
+    return [...expressionData].sort((a, b) => {
+      const dateA = new Date(a._id.split("/").reverse().join("-"));
+      const dateB = new Date(b._id.split("/").reverse().join("-"));
+      return dateA - dateB;
+    });
+  }, [expressionData]);
+
   const totalMarah = expressionData.reduce((sum, item) => sum + item.totalMarah, 0);
   const totalRisih = expressionData.reduce((sum, item) => sum + item.totalRisih, 0);
   const totalTakut = expressionData.reduce((sum, item) => sum + item.totalTakut, 0);
@@ -134,7 +142,7 @@ const SummaryExpression = () => {
   const avgSedih = totalDays > 0 ? (totalSedih / totalDays).toFixed(2) : 0;
   const avgTerkejut = totalDays > 0 ? (totalTerkejut / totalDays).toFixed(2) : 0;
 
-  const latestDay = expressionData[expressionData.length - 1] || {};
+  const latestDay = sortedData[sortedData.length - 1] || {};
   const latestMarah = latestDay.totalMarah || 0;
   const latestRisih = latestDay.totalRisih || 0;
   const latestTakut = latestDay.totalTakut || 0;
