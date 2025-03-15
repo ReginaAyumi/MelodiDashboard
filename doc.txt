@@ -1,0 +1,24 @@
+microsoft visual studio community 2022
+c++ developer pack
+install opencv for windows
+add path opencv
+add path vs 2022 msbuild
+
+npm install
+npx build-opencv --version 4.6.0 rebuild
+
+cd client
+npm install
+
+cd server
+npm install
+
+superadmin:
+email: regina@gmail.com
+pass: Regina123_
+
+cd client
+npm start
+
+cd server
+npm run dev

@@ -11,7 +11,6 @@ import {
   Select,
   FormControl,
   InputLabel,
-  Button,
 } from "@mui/material";
 import ManIcon from "@mui/icons-material/Man";
 import WomanIcon from "@mui/icons-material/Woman";
@@ -50,8 +49,8 @@ const SummaryGender = () => {
   const { genderData, isLoading, error } = state;
   const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
 
-  const [selectedMetric, setSelectedMetric] = useState("average");
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [selectedMetric, setSelectedMetric] = useState("latest");
+  const [isExpanded] = useState(false);
 
   useEffect(() => {
     const socketGender = new WebSocket("ws://localhost:5001/genderdailies");
@@ -135,13 +134,13 @@ const SummaryGender = () => {
         return (
           <>
             <Card
-              title="Average Pria"
+              title="Pria"
               value={avgPria}
               icon={ManIcon}
               theme={theme}
             />
             <Card
-              title="Average Wanita"
+              title="Wanita"
               value={avgWanita}
               icon={WomanIcon}
               theme={theme}
@@ -152,13 +151,13 @@ const SummaryGender = () => {
         return (
           <>
             <Card
-              title="Latest Pria"
+              title="Pria"
               value={latestPria}
               icon={ManIcon}
               theme={theme}
             />
             <Card
-              title="Latest Wanita"
+              title="Wanita"
               value={latestWanita}
               icon={WomanIcon}
               theme={theme}
@@ -169,13 +168,13 @@ const SummaryGender = () => {
         return (
           <>
             <Card
-              title="Total Pria"
+              title="Pria"
               value={totalPria}
               icon={ManIcon}
               theme={theme}
             />
             <Card
-              title="Total Wanita"
+              title="Wanita"
               value={totalWanita}
               icon={WomanIcon}
               theme={theme}
@@ -198,14 +197,19 @@ const SummaryGender = () => {
             label="Metric"
           >
             <MenuItem value="average">Average</MenuItem>
-            <MenuItem value="latest">Latest</MenuItem>
+            <MenuItem value="latest">Today</MenuItem>
             <MenuItem value="total">Total</MenuItem>
           </Select>
         </FormControl>
       </Grid>
       <Grid item xs={12}>
         <Typography variant="h4" align="center" gutterBottom>
-          Summary Gender
+        {selectedMetric === "average"
+            ? "Average Gender Summary"
+            : selectedMetric === "latest"
+            ? "Today Gender Summary"
+            : "Total Gender Summary"
+          }
         </Typography>
       </Grid>
       {/* <Grid item xs={12} display="flex" justifyContent="left">

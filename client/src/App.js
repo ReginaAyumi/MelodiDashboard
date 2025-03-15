@@ -11,18 +11,13 @@ import { BrowserRouter, Navigate, Routes } from "react-router-dom";
 import { themeSettings } from "theme";
 import Layout from "scenes/layout";
 import Dashboard from "scenes/dashboard";
-import Feedbacks from "scenes/feedbacks";
-import JumlahPengunjung from "scenes/jumlah_pengunjung";
-import OverallFeedback from "scenes/overall_feedback";
-import MostClicked from "scenes/most_clicked";
-import ClickStream from "scenes/click_stream";
 import DetailUsia from "scenes/detail_usia";
 import DetailGender from "scenes/detail_gender";
 import DetailEkspresi from "scenes/detail_ekspresi";
-import DetailRas from "scenes/detail_ras";
-import DetailBawaan from "scenes/detail_bawaan";
 import Login from "components/Login";
 import Signup from "components/SignUp";
+import CameraComponent from "./components/CameraComponents";
+// import { WebSocket } from "ws";
 
 const PrivateRoute = ({ element }) => {
   const token = localStorage.getItem("token");
@@ -42,6 +37,30 @@ function App() {
     if (adminId) {
       dispatch(setAdminData({ adminId, name, role }));
     }
+
+    // Sesuaikan URL server WebSocket
+    const socket = new WebSocket("ws://localhost:5001");
+
+    // Tambahkan listener untuk event open, message, dan close
+    socket.onopen = () => {
+      console.log("WebSocket connected from client");
+    };
+
+    socket.onmessage = (event) => {
+      console.log("Message from server:", event.data);
+
+      // Jika data berupa JSON, parse menjadi objek
+      const message = JSON.parse(event.data);
+      console.log("Parsed message:", message);
+    };
+
+    socket.onclose = () => {
+      console.log("WebSocket disconnected on client");
+    };
+
+    return () => {
+      socket.close();
+    };
   }, [dispatch]);
 
   const mode = useSelector((state) => state.global.mode);
@@ -76,32 +95,8 @@ function App() {
                 element={<PrivateRoute element={<DetailEkspresi />} />}
               />
               <Route
-                path="/detail_ras"
-                element={<PrivateRoute element={<DetailRas />} />}
-              />
-              <Route
-                path="/detail_bawaan"
-                element={<PrivateRoute element={<DetailBawaan />} />}
-              />
-              <Route
-                path="/feedbacks"
-                element={<PrivateRoute element={<Feedbacks />} />}
-              />
-              {/* <Route
-                path="/jumlah_pengunjung"
-                element={<PrivateRoute element={<JumlahPengunjung />} />}
-              /> */}
-              <Route
-                path="/overall_feedback"
-                element={<PrivateRoute element={<OverallFeedback />} />}
-              />
-              <Route
-                path="/most_clicked"
-                element={<PrivateRoute element={<MostClicked />} />}
-              />
-              <Route
-                path="/click_stream"
-                element={<PrivateRoute element={<ClickStream />} />}
+                path="/camera"
+                element={<PrivateRoute element={<CameraComponent />} />}
               />
               <Route path="/" element={<Navigate replace to="/login" />} />
             </Route>

@@ -11,6 +11,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TextField,
   Paper,
   Select,
   MenuItem,
@@ -20,6 +21,12 @@ import {
 } from "@mui/material";
 import { ResponsiveBar } from "@nivo/bar";
 import { ResponsiveLine } from "@nivo/line";
+import { ResponsivePie } from '@nivo/pie';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFnsV3';
+import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
+import { format } from "date-fns";
 
 const DetailEkspresi = ({ isSidebarOpen }) => {
   const theme = useTheme();
@@ -30,6 +37,8 @@ const DetailEkspresi = ({ isSidebarOpen }) => {
   const [startTimeFrame, setStartTimeFrame] = useState("");
   const [endTimeFrame, setEndTimeFrame] = useState("");
   const [availableTimeFrames, setAvailableTimeFrames] = useState([]);
+  const [startDateTime, setStartDateTime] = useState(null); // Menyimpan objek Date untuk Start
+  const [endDateTime, setEndDateTime] = useState(null);
 
   useEffect(() => {
     const socket = new WebSocket("ws://localhost:5001");
@@ -98,6 +107,8 @@ const DetailEkspresi = ({ isSidebarOpen }) => {
     setTimeFrame(newTimeFrame);
     setStartTimeFrame("");
     setEndTimeFrame("");
+    setStartDateTime("");
+    setEndDateTime("");
     setIsLoading(true);
   };
 
@@ -110,38 +121,63 @@ const DetailEkspresi = ({ isSidebarOpen }) => {
   };
 
   const filterDataByTimeFrame = () => {
-    if (timeFrame === "Daily") {
-      let filteredData = [...data];
+    let filteredData = [...data];
+
+    console.log("Time Frame:", timeFrame);
+    console.log("Start Time Frame:", startTimeFrame);
+    console.log("End Time Frame:", endTimeFrame);
+    console.log("Start DateTime Value:", startDateTime);
+    console.log("End DateTime Value:", endDateTime);
+
+    if ((startTimeFrame && endTimeFrame) || (startDateTime && endDateTime)) {
+        if (timeFrame === "Weekly") {
+            console.log("Filtering by Weekly");
+            filteredData = data.filter(item => {
+                const itemWeek = item._id; // Contoh: '2024-42'
+                console.log("Item Week:", itemWeek);
+                console.log("Start Week:", startTimeFrame, "End Week:", endTimeFrame);
+                return itemWeek >= startTimeFrame && itemWeek <= endTimeFrame;
+            });
+        } else if (timeFrame === "Minute") {
+          console.log("Filtering by Minute");
   
-      if (startTimeFrame && endTimeFrame) {
-        filteredData = data.filter((item) => {
-          const itemDate = new Date(item._id.split('/').reverse().join('-'));
-          const startDate = new Date(startTimeFrame.split('/').reverse().join('-'));
-          const endDate = new Date(endTimeFrame.split('/').reverse().join('-'));
-          
-          return itemDate >= startDate && itemDate <= endDate;
-        });
-      }
+          // Konversi input ke format yang sesuai
+          const startTime = format(new Date(startDateTime), "yyyy-MM-dd HH:mm"); // Output: 2024-10-20 07:55
+          const endTime = format(new Date(endDateTime), "yyyy-MM-dd HH:mm"); // Output: 2024-10-20 08:55
   
-      return sortData(filteredData);
-    } else if (timeFrame === "Weekly" || timeFrame === "Minute") {
-      let filteredData = [...data];
+          console.log("Start DateTime:", startTime);
+          console.log("End DateTime:", endTime);
   
-      if (startTimeFrame && endTimeFrame) {
-        filteredData = data.filter((item) => {
-          // Adjust this logic based on the actual format of _id for Weekly and Minute
-          const itemDate = new Date(item._id); // Assuming _id is directly a valid date format
-          const startDate = new Date(startTimeFrame);
-          const endDate = new Date(endTimeFrame);
-          
-          return itemDate >= startDate && itemDate <= endDate;
-        });
-      }
+          filteredData = data.filter((item) => {
+              // Konversi _id ke format yang sama
+              const itemDateTime = format(new Date(item._id), "yyyy-MM-dd HH:mm");
   
-      return filteredData;
-    } else {
-      return data;
+              console.log("Item DateTime:", itemDateTime);
+  
+              // Filter berdasarkan rentang waktu
+              const isWithinRange = itemDateTime >= startTime && itemDateTime <= endTime;
+  
+              console.log("Is Within Range:", isWithinRange);
+  
+              return isWithinRange;
+          });
+        } else {
+          console.log("Filtering by Daily");
+          filteredData = data.filter((item) => {
+              const itemDate = new Date(item._id.split('/').reverse().join('-'));
+              const startTime = new Date(startTimeFrame);
+              const endTime = new Date(endTimeFrame);
+
+              console.log("Item Date:", itemDate);
+              console.log("Start Time:", startTime, "End Time:", endTime);
+
+              return itemDate >= startTime && itemDate <= endTime;
+          });
+        }
     }
+
+    console.log("Filtered Data for Chart:", filteredData);
+    return sortData(filteredData);
   };
 
   const sortData = (data) => {
@@ -195,6 +231,39 @@ const DetailEkspresi = ({ isSidebarOpen }) => {
     return formattedData;
   };
 
+  const processDataForPieChart = () => {
+    const filteredData = filterDataByTimeFrame();
+  
+    // Menghitung total untuk masing-masing kategori
+    const totalMarah = filteredData.reduce((acc, item) => acc + (item.totalMarah || 0), 0);
+    const totalRisih = filteredData.reduce((acc, item) => acc + (item.totalRisih || 0), 0);
+    const totalTakut = filteredData.reduce((acc, item) => acc + (item.totalTakut || 0), 0);
+    const totalSenyum = filteredData.reduce((acc, item) => acc + (item.totalSenyum || 0), 0);
+    const totalNetral = filteredData.reduce((acc, item) => acc + (item.totalNetral || 0), 0);
+    const totalSedih = filteredData.reduce((acc, item) => acc + (item.totalSedih || 0), 0);
+    const totalTerkejut = filteredData.reduce((acc, item) => acc + (item.totalTerkejut || 0), 0);
+  
+    const totalKeseluruhan = totalMarah + totalRisih + totalTakut + totalSenyum + totalNetral + totalSedih + totalTerkejut;
+  
+    // Memastikan total keseluruhan tidak nol untuk menghindari pembagian dengan nol
+    if (totalKeseluruhan === 0) {
+      return []; // Kembali array kosong jika tidak ada data
+    }
+  
+    return [
+      { id: 'Marah', value: totalMarah, color: '#e63946' },
+      { id: 'Risih', value: totalRisih, color: '#f1faee' },
+      { id: 'Takut', value: totalTakut, color: '#a8dadc' },
+      { id: 'Senyum', value: totalSenyum, color: '#457b9d' },
+      { id: 'Netral', value: totalNetral, color: '#f1faae' },
+      { id: 'Sedih', value: totalSedih, color: '#a8dabc' },
+      { id: 'Terkejut', value: totalTerkejut, color: '#457b9e' },
+    ].map(item => ({
+      ...item,
+      percentage: ((item.value / totalKeseluruhan) * 100).toFixed(1), // Hitung persentase
+    }));
+  };  
+
   if (isLoading) return <div>Loading...</div>;
   if (error) return <div>Error: {error.message}</div>;
 
@@ -242,7 +311,50 @@ const DetailEkspresi = ({ isSidebarOpen }) => {
           Weekly
         </Button>
       </Grid>
-      {timeFrame && (
+      {timeFrame === "Daily" && (
+        <LocalizationProvider dateAdapter={AdapterDateFns}>
+          <Box mb="1rem" mt="20px" display="flex" gap="1rem">
+            <DatePicker
+              label="Start Date"
+              value={startTimeFrame}
+              onChange={(newValue) => setStartTimeFrame(newValue)}
+              renderInput={(params) => <TextField {...params} />}
+            />
+            <DatePicker
+              label="End Date"
+              value={endTimeFrame}
+              onChange={(newValue) => setEndTimeFrame(newValue)}
+              renderInput={(params) => <TextField {...params} />}
+            />
+          </Box>
+        </LocalizationProvider>
+      )}
+
+      {timeFrame === "Minute" && (
+        <LocalizationProvider dateAdapter={AdapterDateFns}>
+          <Box display="flex" flexDirection="column" gap="1rem" mb="1rem">
+            {/* Start and End DateTime Pickers */}
+            <Box display="flex" gap="1rem">
+              <DateTimePicker
+                label="Start DateTime"
+                value={startDateTime}
+                onChange={(newValue) => setStartDateTime(newValue)}
+                renderInput={(params) => <TextField {...params} />}
+              />
+              <DateTimePicker
+                label="End DateTime"
+                value={endDateTime}
+                onChange={(newValue) => setEndDateTime(newValue)}
+                renderInput={(params) => <TextField {...params} />}
+              />
+            </Box>
+          </Box>
+        </LocalizationProvider>
+      )}
+
+
+
+      {timeFrame === "Weekly" && (
         <Box mb="1rem" mt="20px" display="flex" gap="1rem">
           <FormControl fullWidth>
             <InputLabel id="start-timeframe-label">
@@ -531,6 +643,95 @@ const DetailEkspresi = ({ isSidebarOpen }) => {
             />
           </Box>
         </Grid>
+
+
+        <Grid container justifyContent="center" alignItems="center" style={{ marginTop: '30px' }}>
+          <Grid item xs={12} md={6}>
+            <Box
+              height="50vh"
+              border={`1px solid ${theme.palette.secondary[200]}`}
+              borderRadius="4px"
+              boxShadow={2}
+            >
+              <ResponsivePie
+                data={processDataForPieChart()}
+                margin={{ top: 40, right: 80, bottom: 80, left: 80 }}
+                innerRadius={0.5}
+                padAngle={0.7}
+                cornerRadius={3}
+                colors={{ scheme: 'nivo' }}
+                borderColor={{ theme: 'background' }}
+                enableArcLinkLabels={true} // Mengaktifkan arcLinkLabels
+                arcLinkLabel={e => `${e.id}: (${e.data.percentage}%)`} // Mengatur label untuk arcLink
+                arcLabel={e => `${e.value}`} // Menampilkan jumlah dan persentase dalam arcLabel
+                arcLinkLabelsTextColor={`${theme.palette.secondary[200]}`}
+                arcLabelsTextStyle={{
+                  fontSize: 16,  // Membesarkan teks arc labels
+                  fontWeight: 'bold',  // Membuat teks arc labels bold
+                }}
+                arcLinkLabelsTextStyle={{
+                  fontSize: 16,  // Membesarkan teks
+                  fontWeight: 'bold',  // Membuat teks bold
+                }}
+                isInteractive={false}
+                theme={{
+                  axis: {
+                    domain: {
+                      line: {
+                        stroke: theme.palette.secondary[200],
+                      },
+                    },
+                    ticks: {
+                      line: {
+                        stroke: theme.palette.secondary[200],
+                        strokeWidth: 1,
+                      },
+                      text: {
+                        fill: theme.palette.secondary[200],
+                      },
+                    },
+                  },
+                }}
+                legends={[
+                  {
+                    anchor: 'bottom',
+                    direction: 'row',
+                    justify: false,
+                    translateX: 0,
+                    translateY: 56, // Jarak vertikal dari pie chart
+                    itemsSpacing: 0,
+                    itemWidth: 70,
+                    itemHeight: 18,
+                    itemTextColor: theme.palette.secondary[200],
+                    itemDirection: 'left-to-right',
+                    itemOpacity: 1,
+                    symbolSize: 18,
+                    symbolShape: 'circle',
+                    effects: [
+                      {
+                        on: 'hover',
+                        style: {
+                          itemTextColor: '#000',
+                        },
+                      },
+                    ],
+                    // Modify how the legend is rendered here
+                    items: processDataForPieChart().map(item => ({
+                      id: item.id,
+                      label: `${item.id}: ${item.value} (${item.percentage}%)`, // Display value and percentage in legend
+                      color: item.color,
+                    })),
+                    itemTextStyle: {
+                      fontSize: 16,  // Membesarkan teks legend
+                      fontWeight: 'bold',  // Membuat teks legend bold
+                    },
+                  },
+                ]}
+              />
+            </Box>
+          </Grid>
+        </Grid>  
+
         <Grid item xs={12}>
           <Box
             width="100%"

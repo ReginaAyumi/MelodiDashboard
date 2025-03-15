@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import {
   Box,
-  CircularProgress,
+  // CircularProgress,
   Typography,
   Grid,
   Paper,
@@ -58,11 +58,11 @@ const Card = ({ title, value, icon: IconComponent, theme }) => (
 const SummaryExpression = () => {
   const theme = useTheme();
   const { state, dispatch } = useStateContextExpression();
-  const { expressionData, isLoading, error } = state;
+  const { expressionData} = state;
   const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
 
-  const [selectedMetric, setSelectedMetric] = useState("average");
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [selectedMetric, setSelectedMetric] = useState("latest");
+  const [isExpanded] = useState(false);
 
   useEffect(() => {
     const socketExpression = new WebSocket("ws://localhost:5001/expressiondailies");
@@ -156,37 +156,37 @@ const SummaryExpression = () => {
       case "average":
         return (
           <>
-            <Card title="Average Marah" value={avgMarah} icon={faAngry} theme={theme} />
-            <Card title="Average Risih" value={avgRisih} icon={faMeh} theme={theme} />
-            <Card title="Average Takut" value={avgTakut} icon={faFrownOpen} theme={theme} />
-            <Card title="Average Senyum" value={avgSenyum} icon={faSmile} theme={theme} />
-            <Card title="Average Netral" value={avgNetral} icon={faMehBlank} theme={theme} />
-            <Card title="Average Sedih" value={avgSedih} icon={faSadTear} theme={theme} />
-            <Card title="Average Terkejut" value={avgTerkejut} icon={faSurprise} theme={theme} />
+            <Card title="Marah" value={avgMarah} icon={faAngry} theme={theme} />
+            <Card title="Risih" value={avgRisih} icon={faMeh} theme={theme} />
+            <Card title="Takut" value={avgTakut} icon={faFrownOpen} theme={theme} />
+            <Card title="Senyum" value={avgSenyum} icon={faSmile} theme={theme} />
+            <Card title="Netral" value={avgNetral} icon={faMehBlank} theme={theme} />
+            <Card title="Sedih" value={avgSedih} icon={faSadTear} theme={theme} />
+            <Card title="Terkejut" value={avgTerkejut} icon={faSurprise} theme={theme} />
           </>
         );
       case "latest":
         return (
           <>
-            <Card title="Latest Marah" value={latestMarah} icon={faAngry} theme={theme} />
-            <Card title="Latest Risih" value={latestRisih} icon={faMeh} theme={theme} />
-            <Card title="Latest Takut" value={latestTakut} icon={faFrownOpen} theme={theme} />
-            <Card title="Latest Senyum" value={latestSenyum} icon={faSmile} theme={theme} />
-            <Card title="Latest Netral" value={latestNetral} icon={faMehBlank} theme={theme} />
-            <Card title="Latest Sedih" value={latestSedih} icon={faSadTear} theme={theme} />
-            <Card title="Latest Terkejut" value={latestTerkejut} icon={faSurprise} theme={theme} />
+            <Card title="Marah" value={latestMarah} icon={faAngry} theme={theme} />
+            <Card title="Risih" value={latestRisih} icon={faMeh} theme={theme} />
+            <Card title="Takut" value={latestTakut} icon={faFrownOpen} theme={theme} />
+            <Card title="Senyum" value={latestSenyum} icon={faSmile} theme={theme} />
+            <Card title="Netral" value={latestNetral} icon={faMehBlank} theme={theme} />
+            <Card title="Sedih" value={latestSedih} icon={faSadTear} theme={theme} />
+            <Card title="Terkejut" value={latestTerkejut} icon={faSurprise} theme={theme} />
           </>
         );
       case "total":
         return (
           <>
-            <Card title="Total Marah" value={totalMarah} icon={faAngry} theme={theme} />
-            <Card title="Total Risih" value={totalRisih} icon={faMeh} theme={theme} />
-            <Card title="Total Takut" value={totalTakut} icon={faFrownOpen} theme={theme} />
-            <Card title="Total Senyum" value={totalSenyum} icon={faSmile} theme={theme} />
-            <Card title="Total Netral" value={totalNetral} icon={faMehBlank} theme={theme} />
-            <Card title="Total Sedih" value={totalSedih} icon={faSadTear} theme={theme} />
-            <Card title="Total Terkejut" value={totalTerkejut} icon={faSurprise} theme={theme} />
+            <Card title="Marah" value={totalMarah} icon={faAngry} theme={theme} />
+            <Card title="Risih" value={totalRisih} icon={faMeh} theme={theme} />
+            <Card title="Takut" value={totalTakut} icon={faFrownOpen} theme={theme} />
+            <Card title="Senyum" value={totalSenyum} icon={faSmile} theme={theme} />
+            <Card title="Netral" value={totalNetral} icon={faMehBlank} theme={theme} />
+            <Card title="Sedih" value={totalSedih} icon={faSadTear} theme={theme} />
+            <Card title="Terkejut" value={totalTerkejut} icon={faSurprise} theme={theme} />
           </>
         );
       default:
@@ -205,14 +205,19 @@ const SummaryExpression = () => {
             label="Metric"
           >
             <MenuItem value="average">Average</MenuItem>
-            <MenuItem value="latest">Latest</MenuItem>
+            <MenuItem value="latest">Today</MenuItem>
             <MenuItem value="total">Total</MenuItem>
           </Select>
         </FormControl>
       </Grid>
       <Grid item xs={12}>
         <Typography variant="h4" align="center" gutterBottom>
-          Summary Expression
+        {selectedMetric === "average"
+            ? "Average Expression Summary"
+            : selectedMetric === "latest"
+            ? "Today Expression Summary"
+            : "Total Expression Summary"
+          }
         </Typography>
       </Grid>
       <Grid item xs={12}>

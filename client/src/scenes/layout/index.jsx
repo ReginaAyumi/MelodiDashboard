@@ -12,6 +12,7 @@ const Layout = () => {
 
   // Ambil adminId dari Redux state
   const adminId = useSelector((state) => state.global.adminId);
+  console.log("adminId from Redux:", adminId);
 
   // Menggunakan useGetAdminQuery untuk mengambil data admin berdasarkan adminId
   const { data, error, isLoading } = useGetAdminQuery(adminId, {

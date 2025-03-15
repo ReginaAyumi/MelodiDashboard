@@ -20,3 +20,11 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+/src/scenes/detail_bawaan
+/src/scenes/detail_ras
+/src/scenes/feedbacks
+/src/scenes/jumlah_pengunjung
+/src/scenes/most_clicked
+/src/scenes/overall_feedback
+/src/scenes/click_stream

@@ -2,9 +2,9 @@ import React, { useState } from "react";
 import { useDispatch } from "react-redux";
 import axios from "axios";
 import { setAdminData } from "state"; // Sesuaikan path dengan lokasi file globalSlice.js
-import { Link } from "react-router-dom";
+// import { Link } from "react-router-dom";
 import styles from "./styles.module.css";
-import welcomeImage from "assets/logo-remosto.svg";
+// import welcomeImage from "assets/logo-remosto.svg";
 
 const Login = () => {
   const [data, setData] = useState({ email: '', password: '' });
@@ -76,7 +76,9 @@ const Login = () => {
           </form>
         </div>
         <div className={styles.right}>
-        <img src={welcomeImage} alt="Welcome" className={styles.welcome_image} />
+        {/* <img src={welcomeImage} alt="Welcome" className={styles.welcome_image} /> */}
+          <h1>MeLODI</h1>
+          <h1>Dashboard</h1>
           {/* <h1>New Here?</h1>
           <Link to="/signup">
             <button type="button" className={styles.white_btn}>

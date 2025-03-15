@@ -14,25 +14,17 @@ import {
 } from "@mui/material";
 import {
   EmojiEmotionsOutlined,
-  AltRouteOutlined,
   WcOutlined,
-  LuggageOutlined,
-  ArticleOutlined,
-  AssessmentOutlined,
-  AdjustOutlined,
-  AdsClickOutlined,
-  PeopleOutlined,
   SettingsOutlined,
   ChevronLeft,
   ChevronRightOutlined,
   HomeOutlined,
   Groups2Outlined,
+  CameraAltOutlined,
 } from "@mui/icons-material";
 import Avatar from "@mui/material/Avatar";
-import { deepPurple } from "@mui/material/colors";
 import { useLocation, useNavigate } from "react-router-dom";
 import FlexBetween from "./FlexBetween";
-import profileImage from "assets/Profile.jpeg";
 
 const navItems = [
   {
@@ -60,43 +52,9 @@ const navItems = [
     path: "/detail_ekspresi",
   },
   {
-    text: "Detail Ras",
-    icon: <AltRouteOutlined />,
-    path: "/detail_ras",
-  },
-  {
-    text: "Detail Bawaan",
-    icon: <LuggageOutlined />,
-    path: "/detail_bawaan",
-  },
-  {
-    text: "Fitur Tambahan",
-    icon: null,
-  },
-  // {
-  //     text: "Jumlah Pengunjung",
-  //     icon: <PeopleOutlined />,
-  //     path: "/jumlah_pengunjung"
-  // },
-  {
-    text: "Feedbacks",
-    icon: <AssessmentOutlined />,
-    path: "/feedbacks",
-  },
-  {
-    text: "Overall Feedback",
-    icon: <ArticleOutlined />,
-    path: "/overall_feedback",
-  },
-  {
-    text: "Click Stream",
-    icon: <AdjustOutlined />,
-    path: "/click_stream",
-  },
-  {
-    text: "Most Clicked",
-    icon: <AdsClickOutlined />,
-    path: "/most_clicked",
+    text: "Kamera",
+    icon: <CameraAltOutlined />,
+    path: "/camera",
   },
 ];
 

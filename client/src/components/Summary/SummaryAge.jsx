@@ -6,12 +6,11 @@ import {
   Grid,
   Paper,
   useTheme,
-  useMediaQuery,
+  // useMediaQuery,
   MenuItem,
   Select,
   FormControl,
   InputLabel,
-  Button,
 } from "@mui/material";
 import ChildCareIcon from "@mui/icons-material/ChildCare";
 import EmojiPeopleIcon from "@mui/icons-material/EmojiPeople";
@@ -50,13 +49,13 @@ const SummaryAge = () => {
   const theme = useTheme();
   const { state, dispatch } = useStateContextAge();
   const { ageData, isLoading, error } = state;
-  const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
+  // const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
 
-  const [selectedMetric, setSelectedMetric] = useState("average");
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [selectedMetric, setSelectedMetric] = useState("latest");
+  const [isExpanded] = useState(false);
 
   useEffect(() => {
-    const socketAge = new WebSocket("ws://localhost:5001/agedailies");
+    const socketAge = new WebSocket("ws://localhost:5001");
 
     socketAge.onopen = () => {
       console.log("WebSocket connection opened for summary age data");
@@ -65,6 +64,7 @@ const SummaryAge = () => {
 
     socketAge.onmessage = (event) => {
       const message = JSON.parse(event.data);
+      console.log("Received message:", message); 
       if (message.type === "INITIAL_DATA" || message.type === "DATA") {
         dispatch({
           type: "SET_AGE_DATA",
@@ -93,12 +93,6 @@ const SummaryAge = () => {
   }, [dispatch]);
 
   const processDataForBarChart = () => {
-    const sortedData = [...ageData].sort((a, b) => {
-      const dateA = new Date(a._id.split("/").reverse().join("-"));
-      const dateB = new Date(b._id.split("/").reverse().join("-"));
-      return dateA - dateB;
-    });
-
     return sortedData.map((item, index) => ({
       _id: item._id,
       day: `Day ${index + 1}`,
@@ -142,25 +136,25 @@ const SummaryAge = () => {
         return (
           <>
             <Card
-              title="Average Anak"
+              title="Anak"
               value={avgAnak}
               icon={ChildCareIcon}
               theme={theme}
             />
             <Card
-              title="Average Remaja"
+              title="Remaja"
               value={avgRemaja}
               icon={EmojiPeopleIcon}
               theme={theme}
             />
             <Card
-              title="Average Dewasa"
+              title="Dewasa"
               value={avgDewasa}
               icon={PersonIcon}
               theme={theme}
             />
             <Card
-              title="Average Lansia"
+              title="Lansia"
               value={avgLansia}
               icon={ElderlyIcon}
               theme={theme}
@@ -171,25 +165,25 @@ const SummaryAge = () => {
         return (
           <>
             <Card
-              title="Latest Anak"
+              title="Anak"
               value={latestAnak}
               icon={ChildCareIcon}
               theme={theme}
             />
             <Card
-              title="Latest Remaja"
+              title="Remaja"
               value={latestRemaja}
               icon={EmojiPeopleIcon}
               theme={theme}
             />
             <Card
-              title="Latest Dewasa"
+              title="Dewasa"
               value={latestDewasa}
               icon={PersonIcon}
               theme={theme}
             />
             <Card
-              title="Latest Lansia"
+              title="Lansia"
               value={latestLansia}
               icon={ElderlyIcon}
               theme={theme}
@@ -200,25 +194,25 @@ const SummaryAge = () => {
         return (
           <>
             <Card
-              title="Total Anak"
+              title="Anak"
               value={totalAnak}
               icon={ChildCareIcon}
               theme={theme}
             />
             <Card
-              title="Total Remaja"
+              title="Remaja"
               value={totalRemaja}
               icon={EmojiPeopleIcon}
               theme={theme}
             />
             <Card
-              title="Total Dewasa"
+              title="Dewasa"
               value={totalDewasa}
               icon={PersonIcon}
               theme={theme}
             />
             <Card
-              title="Total Lansia"
+              title="Lansia"
               value={totalLansia}
               icon={ElderlyIcon}
               theme={theme}
@@ -241,14 +235,19 @@ const SummaryAge = () => {
             label="Metric"
           >
             <MenuItem value="average">Average</MenuItem>
-            <MenuItem value="latest">Latest</MenuItem>
+            <MenuItem value="latest">Today</MenuItem>
             <MenuItem value="total">Total</MenuItem>
           </Select>
         </FormControl>
       </Grid>
       <Grid item xs={12}>
         <Typography variant="h4" align="center" gutterBottom>
-          Summary Age
+          {selectedMetric === "average"
+            ? "Average Age Summary"
+            : selectedMetric === "latest"
+            ? "Today Age Summary"
+            : "Total Age Summary"
+          }
         </Typography>
       </Grid>
       {/* <Grid item xs={12} display="flex" justifyContent="left">

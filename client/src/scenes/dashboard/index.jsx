@@ -4,13 +4,9 @@ import Header from "components/Header";
 import { StateProviderAge } from "state/StateContextAge";
 import { StateProviderGender } from "state/StateContextGender";
 import { StateProviderExpression } from "state/StateContextExpression";
-import { StateProviderRace } from "state/StateContextRace";
-import { StateProviderLuggage } from "state/StateContextLuggage";
 import SummaryAge from "components/Summary/SummaryAge";
 import SummaryGender from "components/Summary/SummaryGender";
 import SummaryExpression from "components/Summary/SummaryExpression";
-import SummaryRace from "components/Summary/SummaryRace";
-import SummaryLuggage from "components/Summary/SummaryLuggage";
 
 const Dashboard = () => {
   const [selectedSummary, setSelectedSummary] = useState("age");
@@ -59,7 +55,7 @@ const Dashboard = () => {
               >
                 Summary Ekspresi
               </Button>
-              <Button
+              {/* <Button
                 variant="contained"
                 color="primary"
                 onClick={() => handleSummaryChange("race")}
@@ -78,7 +74,7 @@ const Dashboard = () => {
                 }}
               >
                 Summary Bawaan
-              </Button>
+              </Button> */}
             </Box>
           </Grid>
           <Grid item xs={12}>
@@ -98,7 +94,7 @@ const Dashboard = () => {
                   <SummaryExpression />
                 </StateProviderExpression>
               )}
-              {selectedSummary === "race" && (
+              {/* {selectedSummary === "race" && (
                 <StateProviderRace>
                   <SummaryRace />
                 </StateProviderRace>
@@ -107,7 +103,7 @@ const Dashboard = () => {
                 <StateProviderLuggage>
                   <SummaryLuggage />
                 </StateProviderLuggage>
-              )}
+              )} */}
             </Box>
           </Grid>
         </Grid>

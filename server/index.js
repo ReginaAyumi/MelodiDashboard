@@ -1,31 +1,16 @@
 import express from "express";
+import http from "http";
 import bodyParser from "body-parser";
 import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
 import helmet from "helmet";
 import morgan from "morgan";
-import clientRoutes from "./routes/client.js";
-import managementRoutes from "./routes/management.js";
-import salesRoutes from "./routes/sales.js";
-import generalRoutes from "./routes/general.js";
-import coreRoutes from "./routes/core.js";
-import additionalRoutes from "./routes/additional.js";
 import adminsRoutes from "./routes/admins.js";
 import authRoutes from "./routes/auth.js";
 import { WebSocketServer, WebSocket } from "ws";
-import { Age_Daily, Age_Min, Age_Week } from "./models/Age.js";
-import { Gender_Daily, Gender_Min, Gender_Week } from "./models/Gender.js";
-import {
-  Expression_Daily,
-  Expression_Min,
-  Expression_Week,
-} from "./models/Expression.js";
-import { Race_Daily, Race_Min, Race_Week } from "./models/Race.js";
-import { Luggage_Daily, Luggage_Min, Luggage_Week } from "./models/Luggage.js";
-import Visitor from "./models/Visitor.js";
-import ClickStream from "./models/ClickStream.js";
-import { dataClickStream } from "./data/dataDummy.js";
+import FaceAnalytics from "./models/FaceAnalytics.js";
+import recognizeRoutes from "./routes/recognize.js";
 
 dotenv.config();
 const app = express();
@@ -43,27 +28,41 @@ app.use(
   })
 );
 
+// Add a basic route
+app.get("/", (req, res) => {
+  res.send("Server is running successfully!");
+});
+
+// Route untuk connect camera ke API face recognition
+app.use("/api", recognizeRoutes);
+
+// Endpoint untuk mengambil data admin
+app.get('/admins/admin/:adminId', (req, res) => {
+  const { adminId } = req.params;
+  // Implementasi logika untuk mengambil data admin
+  res.json({ adminId, name: 'Admin Name', role: 'Admin' });
+});
+
 // Routes
-app.use("/client", clientRoutes);
-app.use("/management", managementRoutes);
-app.use("/sales", salesRoutes);
-app.use("/general", generalRoutes);
-app.use("/core", coreRoutes);
-app.use("/additional", additionalRoutes);
 app.use("/admins", adminsRoutes);
 app.use("/auth", authRoutes);
 
-const PORT = process.env.PORT || 9000;
+const PORT = process.env.PORT || 5001;
 
 // Mulai server Express
+
 const server = app.listen(PORT, () => {
   console.log(`Server berjalan di port: ${PORT}`);
 });
 
-// WebSocket setup
-const wss = new WebSocketServer({
-  server,
-});
+// console.log("Initializing WebSocket server...");
+const wss = new WebSocketServer({ server });
+// const wss = new WebSocket("ws://127.0.0.1:9000");
+// console.log("WebSocket server is listening for connections...");
+
+wss.onerror = (error) => {
+  console.error("WebSocket error:", error);
+};
 
 const broadcast = (data) => {
   wss.clients.forEach((client) => {
@@ -73,242 +72,293 @@ const broadcast = (data) => {
   });
 };
 
-const fetchData = async (dataType) => {
+// // Fungsi fetchData untuk mengambil data sesuai dengan tipe
+// async function fetchData(type) {
+//   switch (type) {
+//     case "faceanalytics":
+//       return await FaceAnalytics.find({}); // Sesuaikan query dengan kebutuhan
+//     default:
+//       throw new Error("Unknown data type");
+//   }
+// }
+
+const getTodayStartEndTime = () => {
+  // Mendapatkan tanggal hari ini
+  const today = new Date();
+
+  // Mengatur start time ke awal hari ini (00:00:00)
+  const startTimeFrame = new Date(today.setHours(0, 0, 0, 0));
+
+  // Mengatur end time ke akhir hari ini (23:59:59)
+  const endTimeFrame = new Date(today.setHours(23, 59, 59, 999));
+
+  // Mengembalikan kedua waktu
+  return { startTimeFrame, endTimeFrame };
+};
+
+// Mendapatkan startTimeFrame dan endTimeFrame untuk hari ini
+const { startTimeFrame, endTimeFrame } = getTodayStartEndTime();
+
+console.log("Start Time: ", startTimeFrame);
+console.log("End Time: ", endTimeFrame);
+
+const fetchData = async (dataType, startTimeFrame, endTimeFrame) => {
   let result;
   try {
+    // Define separate conditions for age, gender, and expression
+    const ageCondition = {
+      totalAnak: {
+        $sum: {
+          $cond: [
+            { $and: [{ $gte: ["$age.value", 1] }, { $lte: ["$age.value", 11] }] },
+            1,
+            0,
+          ],
+        },
+      },
+      totalRemaja: {
+        $sum: {
+          $cond: [
+            { $and: [{ $gte: ["$age.value", 12] }, { $lte: ["$age.value", 18] }] },
+            1,
+            0,
+          ],
+        },
+      },
+      totalDewasa: {
+        $sum: {
+          $cond: [
+            { $and: [{ $gte: ["$age.value", 19] }, { $lte: ["$age.value", 59] }] },
+            1,
+            0,
+          ],
+        },
+      },
+      totalLansia: {
+        $sum: {
+          $cond: [{ $gte: ["$age.value", 60] }, 1, 0],
+        },
+      },
+    };
+    
+
+    const genderCondition = {
+      totalPria: {
+        $sum: {
+          $cond: [{ $eq: ["$gender", "laki-laki"] }, 1, 0],
+        },
+      },
+      totalWanita: {
+        $sum: {
+          $cond: [{ $eq: ["$gender", "perempuan"] }, 1, 0],
+        },
+      },
+    };
+
+    const expressionCondition = {
+      totalMarah: {
+        $sum: {
+          $cond: [{ $eq: ["$expression", "marah"] }, 1, 0],
+        },
+      },
+      totalRisih: {
+        $sum: {
+          $cond: [{ $eq: ["$expression", "risih"] }, 1, 0],
+        },
+      },
+      totalTakut: {
+        $sum: {
+          $cond: [{ $eq: ["$expression", "takut"] }, 1, 0],
+        },
+      },
+      totalSenyum: {
+        $sum: {
+          $cond: [{ $eq: ["$expression", "senyum"] }, 1, 0],
+        },
+      },
+      totalNetral: {
+        $sum: {
+          $cond: [{ $eq: ["$expression", "netral"] }, 1, 0],
+        },
+      },
+      totalSedih: {
+        $sum: {
+          $cond: [{ $eq: ["$expression", "sedih"] }, 1, 0],
+        },
+      },
+      totalTerkejut: {
+        $sum: {
+          $cond: [{ $eq: ["$expression", "terkejut"] }, 1, 0],
+        },
+      },
+    };
+
+    // Combine conditions into one object
+    const groupCondition = {
+      ...ageCondition,
+      ...genderCondition,
+      ...expressionCondition,
+    };
+
+    // Determine filter condition based on time frame
+    const filterCondition = {};
+    if (startTimeFrame && endTimeFrame) {
+      filterCondition.createdAt = {
+        $gte: new Date(startTimeFrame),  // greater than or equal to start time
+        $lte: new Date(endTimeFrame),    // less than or equal to end time
+      };
+    }
+
     switch (dataType) {
       case "agedaily":
-        result = await Age_Daily.aggregate([
+        result = await FaceAnalytics.aggregate([
+          {
+            $match: filterCondition,  // Filter data based on date range
+          },
           {
             $group: {
-              _id: "$tanggal",
-              totalAnak: { $sum: "$anak" },
-              totalRemaja: { $sum: "$remaja" },
-              totalDewasa: { $sum: "$dewasa" },
-              totalLansia: { $sum: "$lansia" },
+              _id: { $dateToString: { format: "%Y-%m-%d", date: "$timestamp" } },
+              ...ageCondition,
             },
           },
           { $sort: { _id: 1 } },
         ]);
         break;
+
       case "ageminute":
-        result = await Age_Min.aggregate([
+        result = await FaceAnalytics.aggregate([
+          {
+            $match: filterCondition,  // Filter data based on date range
+          },
           {
             $group: {
-              _id: "$minute",
-              totalAnak: { $sum: "$anak" },
-              totalRemaja: { $sum: "$remaja" },
-              totalDewasa: { $sum: "$dewasa" },
-              totalLansia: { $sum: "$lansia" },
+              _id: { $dateToString: { format: "%Y-%m-%d %H:%M", date: "$timestamp" } },
+              ...ageCondition,
             },
           },
           { $sort: { _id: 1 } },
         ]);
         break;
+
       case "ageweekly":
-        result = await Age_Week.aggregate([
+        result = await FaceAnalytics.aggregate([
+          {
+            $match: filterCondition,  // Filter data based on date range
+          },
           {
             $group: {
-              _id: "$week",
-              totalAnak: { $sum: "$anak" },
-              totalRemaja: { $sum: "$remaja" },
-              totalDewasa: { $sum: "$dewasa" },
-              totalLansia: { $sum: "$lansia" },
+              _id: { $dateToString: { format: "%Y-%U", date: "$timestamp" } },
+              ...ageCondition,
             },
           },
           { $sort: { _id: 1 } },
         ]);
         break;
+
       case "genderdaily":
-        result = await Gender_Daily.aggregate([
+        result = await FaceAnalytics.aggregate([
+          {
+            $match: filterCondition,  // Filter data based on date range
+          },
           {
             $group: {
-              _id: "$tanggal",
-              totalPria: { $sum: "$pria" },
-              totalWanita: { $sum: "$wanita" },
+              _id: { $dateToString: { format: "%Y-%m-%d", date: "$timestamp" } },
+              ...genderCondition,
             },
           },
           { $sort: { _id: 1 } },
         ]);
         break;
+
       case "genderminute":
-        result = await Gender_Min.aggregate([
+        result = await FaceAnalytics.aggregate([
+          {
+            $match: filterCondition,  // Filter data based on date range
+          },
           {
             $group: {
-              _id: "$minute",
-              totalPria: { $sum: "$pria" },
-              totalWanita: { $sum: "$wanita" },
+              _id: { $dateToString: { format: "%Y-%m-%d %H:%M", date: "$timestamp" } },
+              ...genderCondition,
             },
           },
           { $sort: { _id: 1 } },
         ]);
         break;
+
       case "genderweekly":
-        result = await Gender_Week.aggregate([
+        result = await FaceAnalytics.aggregate([
+          {
+            $match: filterCondition,  // Filter data based on date range
+          },
           {
             $group: {
-              _id: "$week",
-              totalPria: { $sum: "$pria" },
-              totalWanita: { $sum: "$wanita" },
+              _id: { $dateToString: { format: "%Y-%U", date: "$timestamp" } },
+              ...genderCondition,
             },
           },
           { $sort: { _id: 1 } },
         ]);
         break;
-      case "expressiondaily":
-        result = await Expression_Daily.aggregate([
+
+        case "expressiondaily":
+        result = await FaceAnalytics.aggregate([
+          {
+            $match: filterCondition,  // Filter data based on date range
+          },
           {
             $group: {
-              _id: "$tanggal",
-              totalMarah: { $sum: "$marah" },
-              totalRisih: { $sum: "$risih" },
-              totalTakut: { $sum: "$takut" },
-              totalSenyum: { $sum: "$senyum" },
-              totalNetral: { $sum: "$netral" },
-              totalSedih: { $sum: "$sedih" },
-              totalTerkejut: { $sum: "$terkejut" },
+              _id: { $dateToString: { format: "%Y-%m-%d", date: "$timestamp" } },
+              ...expressionCondition,
             },
           },
           { $sort: { _id: 1 } },
         ]);
         break;
+
       case "expressionminute":
-        result = await Expression_Min.aggregate([
+        result = await FaceAnalytics.aggregate([
+          {
+            $match: filterCondition,  // Filter data based on date range
+          },
           {
             $group: {
-              _id: "$minute",
-              totalMarah: { $sum: "$marah" },
-              totalRisih: { $sum: "$risih" },
-              totalTakut: { $sum: "$takut" },
-              totalSenyum: { $sum: "$senyum" },
-              totalNetral: { $sum: "$netral" },
-              totalSedih: { $sum: "$sedih" },
-              totalTerkejut: { $sum: "$terkejut" },
+              _id: { $dateToString: { format: "%Y-%m-%d %H:%M", date: "$timestamp" } },
+              ...expressionCondition,
             },
           },
           { $sort: { _id: 1 } },
         ]);
         break;
+
       case "expressionweekly":
-        result = await Expression_Week.aggregate([
+        result = await FaceAnalytics.aggregate([
+          {
+            $match: filterCondition,  // Filter data based on date range
+          },
           {
             $group: {
-              _id: "$week",
-              totalMarah: { $sum: "$marah" },
-              totalRisih: { $sum: "$risih" },
-              totalTakut: { $sum: "$takut" },
-              totalSenyum: { $sum: "$senyum" },
-              totalNetral: { $sum: "$netral" },
-              totalSedih: { $sum: "$sedih" },
-              totalTerkejut: { $sum: "$terkejut" },
+              _id: { $dateToString: { format: "%Y-%U", date: "$timestamp" } },
+              ...expressionCondition,
             },
           },
           { $sort: { _id: 1 } },
         ]);
         break;
-      case "racedaily":
-        result = await Race_Daily.aggregate([
-          {
-            $group: {
-              _id: "$tanggal",
-              totalNegroid: { $sum: "$negroid" },
-              totalEastAsian: { $sum: "$east_asian" },
-              totalIndian: { $sum: "$indian" },
-              totalLatin: { $sum: "$latin" },
-              totalMiddleEastern: { $sum: "$middle_eastern" },
-              totalSouthEastAsian: { $sum: "$south_east_asian" },
-              totalKaukasia: { $sum: "$kaukasia" },
-            },
-          },
-          { $sort: { _id: 1 } },
-        ]);
-        break;
-      case "raceminute":
-        result = await Race_Min.aggregate([
-          {
-            $group: {
-              _id: "$minute",
-              totalNegroid: { $sum: "$negroid" },
-              totalEastAsian: { $sum: "$east_asian" },
-              totalIndian: { $sum: "$indian" },
-              totalLatin: { $sum: "$latin" },
-              totalMiddleEastern: { $sum: "$middle_eastern" },
-              totalSouthEastAsian: { $sum: "$south_east_asian" },
-              totalKaukasia: { $sum: "$kaukasia" },
-            },
-          },
-          { $sort: { _id: 1 } },
-        ]);
-        break;
-      case "raceweekly":
-        result = await Race_Week.aggregate([
-          {
-            $group: {
-              _id: "$week",
-              totalNegroid: { $sum: "$negroid" },
-              totalEastAsian: { $sum: "$east_asian" },
-              totalIndian: { $sum: "$indian" },
-              totalLatin: { $sum: "$latin" },
-              totalMiddleEastern: { $sum: "$middle_eastern" },
-              totalSouthEastAsian: { $sum: "$south_east_asian" },
-              totalKaukasia: { $sum: "$kaukasia" },
-            },
-          },
-          { $sort: { _id: 1 } },
-        ]);
-        break;
-      case "luggagedaily":
-        result = await Luggage_Daily.aggregate([
-          {
-            $group: {
-              _id: "$tanggal",
-              totalManusia: { $sum: "$manusia" },
-              totalBesar: { $sum: "$besar" },
-              totalSedang: { $sum: "$sedang" },
-              totalKecil: { $sum: "$kecil" },
-            },
-          },
-          { $sort: { _id: 1 } },
-        ]);
-        break;
-      case "luggageminute":
-        result = await Luggage_Min.aggregate([
-          {
-            $group: {
-              _id: "$minute",
-              totalManusia: { $sum: "$manusia" },
-              totalBesar: { $sum: "$besar" },
-              totalSedang: { $sum: "$sedang" },
-              totalKecil: { $sum: "$kecil" },
-            },
-          },
-          { $sort: { _id: 1 } },
-        ]);
-        break;
-      case "luggageweekly":
-        result = await Luggage_Week.aggregate([
-          {
-            $group: {
-              _id: "$week",
-              totalManusia: { $sum: "$manusia" },
-              totalBesar: { $sum: "$besar" },
-              totalSedang: { $sum: "$sedang" },
-              totalKecil: { $sum: "$kecil" },
-            },
-          },
-          { $sort: { _id: 1 } },
-        ]);
-        break;
+      // Repeat the same for gender and expression cases...
+
       default:
         throw new Error("Unknown data type");
     }
-    console.log("Fetched data from MongoDB:", result); // Add this line to log the fetched data
+
+    console.log("Fetched data from MongoDB:", result);
     return result;
   } catch (error) {
-    console.error("Error fetching data:", error); // Log any errors that occur during data fetching
+    console.error("Error fetching data:", error);
     throw error;
   }
 };
+
+
 
 wss.on("connection", (ws) => {
   console.log("New client connected");
@@ -316,9 +366,11 @@ wss.on("connection", (ws) => {
   ws.on("message", async (message) => {
     const data = JSON.parse(message);
     console.log("Received message from client:", data);
-    switch (data.type) {
-      case "INITIAL_DAILY_AGE_DATA":
-        try {
+
+    try {
+      switch (data.type) {
+        // Daily Age Data
+        case "INITIAL_DAILY_AGE_DATA":
           const agedailyResult = await fetchData("agedaily");
           if (ws.readyState === WebSocket.OPEN) {
             ws.send(
@@ -328,12 +380,10 @@ wss.on("connection", (ws) => {
               })
             );
           }
-        } catch (error) {
-          console.error("Error fetching daily age data:", error);
-        }
-        break;
-      case "INITIAL_MINUTE_AGE_DATA":
-        try {
+          break;
+
+        // Minute Age Data
+        case "INITIAL_MINUTE_AGE_DATA":
           const ageminuteResult = await fetchData("ageminute");
           if (ws.readyState === WebSocket.OPEN) {
             ws.send(
@@ -343,12 +393,10 @@ wss.on("connection", (ws) => {
               })
             );
           }
-        } catch (error) {
-          console.error("Error fetching minute age data:", error);
-        }
-        break;
-      case "INITIAL_WEEKLY_AGE_DATA":
-        try {
+          break;
+
+        // Weekly Age Data
+        case "INITIAL_WEEKLY_AGE_DATA":
           const ageweeklyResult = await fetchData("ageweekly");
           if (ws.readyState === WebSocket.OPEN) {
             ws.send(
@@ -358,12 +406,10 @@ wss.on("connection", (ws) => {
               })
             );
           }
-        } catch (error) {
-          console.error("Error fetching weekly age data:", error);
-        }
-        break;
-      case "INITIAL_DAILY_GENDER_DATA":
-        try {
+          break;
+
+        // Daily Gender Data
+        case "INITIAL_DAILY_GENDER_DATA":
           const genderdailyResult = await fetchData("genderdaily");
           if (ws.readyState === WebSocket.OPEN) {
             ws.send(
@@ -373,12 +419,10 @@ wss.on("connection", (ws) => {
               })
             );
           }
-        } catch (error) {
-          console.error("Error fetching daily gender data:", error);
-        }
-        break;
-      case "INITIAL_MINUTE_GENDER_DATA":
-        try {
+          break;
+
+        // Minute Gender Data
+        case "INITIAL_MINUTE_GENDER_DATA":
           const genderminuteResult = await fetchData("genderminute");
           if (ws.readyState === WebSocket.OPEN) {
             ws.send(
@@ -388,12 +432,10 @@ wss.on("connection", (ws) => {
               })
             );
           }
-        } catch (error) {
-          console.error("Error fetching minute gender data:", error);
-        }
-        break;
-      case "INITIAL_WEEKLY_GENDER_DATA":
-        try {
+          break;
+
+        // Weekly Gender Data
+        case "INITIAL_WEEKLY_GENDER_DATA":
           const genderweeklyResult = await fetchData("genderweekly");
           if (ws.readyState === WebSocket.OPEN) {
             ws.send(
@@ -403,12 +445,10 @@ wss.on("connection", (ws) => {
               })
             );
           }
-        } catch (error) {
-          console.error("Error fetching weekly gender data:", error);
-        }
-        break;
-      case "INITIAL_DAILY_EXPRESSION_DATA":
-        try {
+          break;
+
+        // Daily Expression Data
+        case "INITIAL_DAILY_EXPRESSION_DATA":
           const expressiondailyResult = await fetchData("expressiondaily");
           if (ws.readyState === WebSocket.OPEN) {
             ws.send(
@@ -418,12 +458,10 @@ wss.on("connection", (ws) => {
               })
             );
           }
-        } catch (error) {
-          console.error("Error fetching daily expression data:", error);
-        }
-        break;
-      case "INITIAL_MINUTE_EXPRESSION_DATA":
-        try {
+          break;
+
+        // Minute Expression Data
+        case "INITIAL_MINUTE_EXPRESSION_DATA":
           const expressionminuteResult = await fetchData("expressionminute");
           if (ws.readyState === WebSocket.OPEN) {
             ws.send(
@@ -433,12 +471,10 @@ wss.on("connection", (ws) => {
               })
             );
           }
-        } catch (error) {
-          console.error("Error fetching minute expression data:", error);
-        }
-        break;
-      case "INITIAL_WEEKLY_EXPRESSION_DATA":
-        try {
+          break;
+
+        // Weekly Expression Data
+        case "INITIAL_WEEKLY_EXPRESSION_DATA":
           const expressionweeklyResult = await fetchData("expressionweekly");
           if (ws.readyState === WebSocket.OPEN) {
             ws.send(
@@ -448,102 +484,13 @@ wss.on("connection", (ws) => {
               })
             );
           }
-        } catch (error) {
-          console.error("Error fetching weekly expression data:", error);
-        }
-        break;
-      case "INITIAL_DAILY_RACE_DATA":
-        try {
-          const racedailyResult = await fetchData("racedaily");
-          if (ws.readyState === WebSocket.OPEN) {
-            ws.send(
-              JSON.stringify({
-                type: "INITIAL_DATA",
-                payload: { racedaily: racedailyResult },
-              })
-            );
-          }
-        } catch (error) {
-          console.error("Error fetching daily race data:", error);
-        }
-        break;
-      case "INITIAL_MINUTE_RACE_DATA":
-        try {
-          const raceminuteResult = await fetchData("raceminute");
-          if (ws.readyState === WebSocket.OPEN) {
-            ws.send(
-              JSON.stringify({
-                type: "INITIAL_DATA",
-                payload: { raceminute: raceminuteResult },
-              })
-            );
-          }
-        } catch (error) {
-          console.error("Error fetching minute race data:", error);
-        }
-        break;
-      case "INITIAL_WEEKLY_RACE_DATA":
-        try {
-          const raceweeklyResult = await fetchData("raceweekly");
-          if (ws.readyState === WebSocket.OPEN) {
-            ws.send(
-              JSON.stringify({
-                type: "INITIAL_DATA",
-                payload: { raceweekly: raceweeklyResult },
-              })
-            );
-          }
-        } catch (error) {
-          console.error("Error fetching weekly race data:", error);
-        }
-        break;
-      case "INITIAL_DAILY_LUGGAGE_DATA":
-        try {
-          const luggagedailyResult = await fetchData("luggagedaily");
-          if (ws.readyState === WebSocket.OPEN) {
-            ws.send(
-              JSON.stringify({
-                type: "INITIAL_DATA",
-                payload: { luggagedaily: luggagedailyResult },
-              })
-            );
-          }
-        } catch (error) {
-          console.error("Error fetching daily luggage data:", error);
-        }
-        break;
-      case "INITIAL_MINUTE_LUGGAGE_DATA":
-        try {
-          const luggageminuteResult = await fetchData("luggageminute");
-          if (ws.readyState === WebSocket.OPEN) {
-            ws.send(
-              JSON.stringify({
-                type: "INITIAL_DATA",
-                payload: { luggageminute: luggageminuteResult },
-              })
-            );
-          }
-        } catch (error) {
-          console.error("Error fetching minute luggage data:", error);
-        }
-        break;
-      case "INITIAL_WEEKLY_LUGGAGE_DATA":
-        try {
-          const luggageweeklyResult = await fetchData("luggageweekly");
-          if (ws.readyState === WebSocket.OPEN) {
-            ws.send(
-              JSON.stringify({
-                type: "INITIAL_DATA",
-                payload: { luggageweekly: luggageweeklyResult },
-              })
-            );
-          }
-        } catch (error) {
-          console.error("Error fetching weekly luggage data:", error);
-        }
-        break;
-      default:
-        console.error("Unknown message type:", data.type);
+          break;
+
+        default:
+          console.error("Unknown message type:", data.type);
+      }
+    } catch (error) {
+      console.error(`Error fetching data for ${data.type}:`, error);
     }
   });
 
@@ -551,6 +498,7 @@ wss.on("connection", (ws) => {
     console.log("Client disconnected");
   });
 });
+
 
 // Helper function to setup a change stream with error handling and reconnection logic
 function setupChangeStream(model, type, fetchDataFunction, wss) {
@@ -569,6 +517,10 @@ function setupChangeStream(model, type, fetchDataFunction, wss) {
           }));
         }
       });
+      // broadcast({
+      //   type: "DATA",
+      //   payload: { [type]: data },
+      // });
     } catch (error) {
       console.error(`Error processing ${type} change:`, error);
     }
@@ -584,28 +536,17 @@ function setupChangeStream(model, type, fetchDataFunction, wss) {
   return changeStream;
 }
 
-// Define your models and corresponding data types
+// Define your model and corresponding data type
 const modelsAndTypes = [
-  { model: Age_Daily, type: 'agedaily' },
-  { model: Age_Min, type: 'ageminute' },
-  { model: Age_Week, type: 'ageweekly' },
-  { model: Gender_Daily, type: 'genderdaily' },
-  { model: Gender_Min, type: 'genderminute' },
-  { model: Gender_Week, type: 'genderweekly' },
-  { model: Expression_Daily, type: 'expressiondaily' },
-  { model: Expression_Min, type: 'expressionminute' },
-  { model: Expression_Week, type: 'expressionweekly' },
-  { model: Race_Daily, type: 'racedaily' },
-  { model: Race_Min, type: 'raceminute' },
-  { model: Race_Week, type: 'raceweekly' },
-  { model: Luggage_Daily, type: 'luggagedaily' },
-  { model: Luggage_Min, type: 'luggageminute' },
-  { model: Luggage_Week, type: 'luggageweekly' },
+  { model: FaceAnalytics, type: 'faceanalytics' },
 ];
 
 // Setup change streams for all models
 modelsAndTypes.forEach(({ model, type }) => setupChangeStream(model, type, fetchData, wss));
 
+FaceAnalytics.watch().on("change", (change) => {
+  broadcast({ type: "DATA_UPDATED", payload: change });
+});
 
 // Mongoose setup
 mongoose
@@ -615,27 +556,5 @@ mongoose
   })
   .then(async () => {
     console.log("Terhubung ke MongoDB");
-
-    // Uncomment the following lines to seed the database
-    // await RaceDaily.insertMany(dataDaily);
-    // await RaceMinute.insertMany(dataMinute);
-    // await RaceWeek.insertMany(dataWeekly);
-    // ClickStream.insertMany(dataClickStream);
-
-    // Verifikasi data dalam koleksi
-    const dataRaceDaily = await Race_Daily.find({});
-    const dataRaceMinute = await Race_Min.find({});
-    const dataRaceWeekly = await Race_Week.find({});
-    const dataLuggageDaily = await Luggage_Daily.find({});
-    const dataAgeDaily = await Age_Daily.find({});
-    const dataGenderDaily = await Gender_Daily.find({});
-    const dataExpressionDaily = await Expression_Daily.find({});
-    console.log("Daily Data: ", dataRaceDaily);
-    console.log("Minute Data: ", dataRaceMinute);
-    console.log("Weekly Data: ", dataRaceWeekly);
-    console.log("Daily Luggage Data: ", dataLuggageDaily);
-    console.log("Daily Age Data: ", dataAgeDaily);
-    console.log("Daily Gender Data: ", dataGenderDaily);
-    console.log("Daily Expression Data: ", dataExpressionDaily);
   })
   .catch((error) => console.log(`${error} tidak terhubung: ${error.message}`));
